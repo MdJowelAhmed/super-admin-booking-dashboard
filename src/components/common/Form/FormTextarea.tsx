@@ -24,7 +24,7 @@ export const FormTextarea = React.forwardRef<HTMLTextAreaElement, FormTextareaPr
         <Textarea
           ref={ref}
           id={textareaId}
-          className={cn(className)}
+          className={cn(className, 'bg-[#EBEBEB]')}
           error={!!error}
           {...props}
         />

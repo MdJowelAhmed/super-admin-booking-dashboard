@@ -45,11 +45,11 @@ export function FormSelect({
           {required && <span className="text-destructive ml-1">*</span>}
         </Label>
       )}
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <Select value={value} onValueChange={onChange} disabled={disabled} >
         <SelectTrigger error={!!error}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent >
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

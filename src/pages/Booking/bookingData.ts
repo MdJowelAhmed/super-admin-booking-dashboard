@@ -104,7 +104,7 @@ export const carBookingsData = [
         licensePlate: 'AD3456',
         plan: '2 Days',
         payment: '€450',
-        paymentStatus: 'Pending',
+        paymentStatus: 'Refunded',
         status: 'Upcoming',
     },
     {

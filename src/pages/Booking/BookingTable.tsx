@@ -1,344 +1,207 @@
-import { useEffect, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import {
-  Filter,
-  Plus,
-  RefreshCw,
-  Calendar,
-  CheckCircle,
-  Eye,
-} from "lucide-react";
-import { statusFilterOptions } from "./bookingData";
+import { useEffect, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Eye, Pencil } from 'lucide-react'
+import { useUrlNumber, useUrlString } from '@/hooks/useUrlState'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { setFilters, setLimit, setPage } from '@/redux/slices/bookingSlice'
+import { SearchInput } from '@/components/common/SearchInput'
+import { Pagination } from '@/components/common/Pagination'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useUrlString, useUrlNumber } from "@/hooks/useUrlState";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import {
-  setFilters,
-  setPage,
-  setLimit,
-  updateBookingStatus,
-} from "@/redux/slices/bookingSlice";
-import { SearchInput } from "@/components/common/SearchInput";
-import { Pagination } from "@/components/common/Pagination";
-import { toast } from '@/utils/toast'
-import type { BookingStatus, Booking } from "@/types";
+} from '@/components/ui/select'
+import type { Booking } from '@/types'
+import { cn } from '@/utils/cn'
+
+const PAYMENT_STATUS_OPTIONS: Array<{ value: Booking['paymentStatus'] | 'all'; label: string }> = [
+  { value: 'all', label: 'All Status' },
+  { value: 'Paid', label: 'Paid' },
+  { value: 'Pending', label: 'Pending' },
+  { value: 'Refunded', label: 'Refunded' },
+]
 
 interface BookingTableProps {
   // onAddBooking: () => void;
-  onViewDetails: (booking: Booking) => void;
+  onViewDetails: (booking: Booking) => void
+  onUpdateStatus: (booking: Booking) => void
 }
 
-export function BookingTable({ onViewDetails }: BookingTableProps) {
-  const dispatch = useAppDispatch();
+export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProps) {
+  const dispatch = useAppDispatch()
 
   // URL state management
-  const [searchQuery, setSearchQuery] = useUrlString("search", "");
-  const [statusFilter, setStatusFilter] = useUrlString("status", "all");
-  const [currentPage, setCurrentPage] = useUrlNumber("page", 1);
-  const [itemsPerPage, setItemsPerPage] = useUrlNumber("limit", 10);
+  const [searchQuery, setSearchQuery] = useUrlString('search', '')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useUrlString('paymentStatus', 'all')
+  const [currentPage, setCurrentPage] = useUrlNumber('page', 1)
+  const [itemsPerPage, setItemsPerPage] = useUrlNumber('limit', 10)
 
   // Redux state
-  const { filteredList, pagination } = useAppSelector(
-    (state) => state.bookings
-  );
+  const { filteredList, pagination } = useAppSelector((state) => state.bookings)
 
   // Sync URL state with Redux filters
   useEffect(() => {
     dispatch(
       setFilters({
         search: searchQuery,
-        status: statusFilter as BookingStatus | "all",
+        paymentStatus: paymentStatusFilter as any,
       })
-    );
-  }, [searchQuery, statusFilter, dispatch]);
+    )
+  }, [searchQuery, paymentStatusFilter, dispatch])
 
   // Sync URL pagination with Redux
   useEffect(() => {
-    dispatch(setPage(currentPage));
-  }, [currentPage, dispatch]);
+    dispatch(setPage(currentPage))
+  }, [currentPage, dispatch])
 
   useEffect(() => {
-    dispatch(setLimit(itemsPerPage));
-  }, [itemsPerPage, dispatch]);
+    dispatch(setLimit(itemsPerPage))
+  }, [itemsPerPage, dispatch])
 
   // Pagination
-  const totalPages = pagination.totalPages;
+  const totalPages = pagination.totalPages
   const paginatedData = useMemo(() => {
-    const startIndex = (pagination.page - 1) * pagination.limit;
-    return filteredList.slice(startIndex, startIndex + pagination.limit);
-  }, [filteredList, pagination.page, pagination.limit]);
-
-  const handleStatusUpdate = (bookingId: string, newStatus: BookingStatus) => {
-    dispatch(updateBookingStatus({ id: bookingId, status: newStatus }));
-    toast({
-      title: "Status Updated",
-      description: `Booking status changed to ${newStatus}`,
-    });
-  };
+    const startIndex = (pagination.page - 1) * pagination.limit
+    return filteredList.slice(startIndex, startIndex + pagination.limit)
+  }, [filteredList, pagination.page, pagination.limit])
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+    setCurrentPage(page)
+  }
 
   const handleItemsPerPageChange = (limit: number) => {
-    setItemsPerPage(limit);
-  };
+    setItemsPerPage(limit)
+  }
 
-  const getStatusButton = (status: string, bookingId: string) => {
-    const statusOptions: {
-      value: BookingStatus;
-      label: string;
-      icon: typeof CheckCircle;
-    }[] = [
-      { value: "Upcoming", label: "Upcoming", icon: Calendar },
-      { value: "Runing", label: "Running", icon: RefreshCw },
-      { value: "Completed", label: "Completed", icon: CheckCircle },
-    ];
-
-    const currentStatusOption = statusOptions.find(
-      (opt) => opt.value === status
-    );
-    const Icon = currentStatusOption?.icon || CheckCircle;
-
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm text-white text-xs font-semibold w-[120px] justify-center hover:opacity-90 transition-opacity
-    ${
-      status === "Completed"
-        ? "bg-primary"
-        : status === "Runing"
-        ? "bg-secondary-foreground"
-        : "bg-primary-foreground"
+  const getTime = (b: Booking) => {
+    if (b.createdAt) {
+      const d = new Date(b.createdAt)
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+      }
     }
-  `}
-          >
-            <Icon
-              className={`h-3.5 w-3.5 ${
-                status === "Runing" ? "animate-spin" : ""
-              }`}
-            />
-            {status}
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          {statusOptions.map((option) => {
-            const OptionIcon = option.icon;
-            return (
-              <DropdownMenuItem
-                key={option.value}
-                onClick={() => handleStatusUpdate(bookingId, option.value)}
-                disabled={status === option.value}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <OptionIcon
-                  className={`h-4 w-4 ${
-                    option.value === "Runing" ? "animate-spin" : ""
-                  }`}
-                />
-                <span>{option.label}</span>
-                {status === option.value && (
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    Current
-                  </span>
-                )}
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  };
+    return '09:00 PM'
+  }
 
-  const getPaymentStatusBadge = (status: string) => {
-    if (status === "Paid") {
-      return (
-        <span className="bg-gray-100 text-accent-foreground text-xs w-20 text-center px-3 py-1 rounded-full font-medium">
-          {status}
-        </span>
-      );
-    }
-    return (
-      <span className="bg-gray-100 text-accent-foreground text-xs w-20 text-center px-3 py-1 rounded-full font-medium">
-        {status}
-      </span>
-    );
-  };
+  const getServiceName = (b: Booking) => b.carName ?? b.carModel
+
+  const getStatusPill = (status: Booking['paymentStatus']) => {
+    const base =
+      'inline-flex items-center px-3 py-1 w-[90px] justify-center text-center rounded-sm text-xs font-medium'
+    const styles =
+      status === 'Paid'
+        ? 'bg-green-100 text-green-800'
+        : status === 'Pending'
+        ? 'bg-orange-100 text-orange-800'
+        : 'bg-indigo-100 text-indigo-800'
+    return <span className={cn(base, styles)}>{status}</span>
+  }
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.4 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
     >
       <Card className="bg-white border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-6">
           <CardTitle className="text-xl font-bold text-slate-800">
-            Car Bookings
+            Booking Management
           </CardTitle>
           <div className="flex items-center gap-3">
-            {/* Search Input */}
             <SearchInput
               value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search client name & car etc..."
-              className="w-[270px]"
+              onChange={(v) => {
+                setSearchQuery(v)
+                setCurrentPage(1)
+              }}
+              placeholder="Search by name / id / service"
+              className="w-[300px]"
             />
 
-            {/* Filter Dropdown */}
-            <div className="w-[120px]">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full bg-secondary border text-white ">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusFilterOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Add Bookings Button */}
-            <Button
-              // onClick={onAddBooking}
-              className="bg-primary-foreground hover:bg-primary/90 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Bookings
-              {/* Add Bookings Button */}
-            </Button>
+            <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+              <SelectTrigger className="w-48 bg-secondary hover:bg-secondary text-white border-secondary">
+                <SelectValue placeholder="Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
 
         <CardContent className="p-0">
           <div className="w-full overflow-auto">
-            <table className="w-full min-w-[900px]">
+            <table className="w-full min-w-[1050px]">
               <thead>
-                <tr className="bg-[#E2FBFB] text-slate-800">
-                  <th className="px-6 py-4 text-left text-sm font-bold">
-                    Booking ID
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold">
-                    Date
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold">
-                    Client Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold">
-                    Car Model
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-bold">
-                    Plan
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-bold">
-                    payment
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-bold">
-                    status
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-bold">
-                    Action
-                  </th>
+                <tr className="bg-[#CCF3F5] text-slate-800">
+                  <th className="px-6 py-4 text-left text-sm font-bold">B.ID</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Time</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Email</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Phone</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Service Name</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Price</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
+                  <th className="px-6 py-4 text-right text-sm font-bold">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-accent-foreground">
+              <tbody className="divide-y divide-gray-100">
                 {paginatedData.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={8}
-                      className="px-6 py-8 text-center text-gray-500"
-                    >
+                    <td colSpan={10} className="px-6 py-8 text-center text-gray-500">
                       No bookings found
                     </td>
                   </tr>
                 ) : (
                   paginatedData.map((booking, index) => (
                     <motion.tr
-                      key={`${booking.id}-${index}`}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      key={booking.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.05 * index }}
-                      className="hover:bg-gray-50/50"
+                      className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-6 py-2 text-sm font-medium text-slate-700">
+                      <td className="px-6 py-4 text-sm font-medium text-slate-700">
                         {booking.id}
                       </td>
-                      <td className="px-6 py-2">
-                        <div className="flex flex-col gap-1 text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="text-accent-foreground w-8">
-                              Start
-                            </span>
-                            <span className="bg-secondary text-white px-3 py-1 rounded-sm text-[11px] font-medium w-[95px] text-center">
-                              {booking.startDate}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-accent-foreground w-8">
-                              End
-                            </span>
-                            <span className="bg-muted text-white px-3  py-1 rounded-sm text-[11px] font-medium w-[95px] text-center">
-                              {booking.endDate}
-                            </span>
-                          </div>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.startDate}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{getTime(booking)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.clientName}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.clientEmail ?? '—'}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.clientPhone ?? '—'}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{getServiceName(booking)}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-slate-800">{booking.payment}</td>
+                      <td className="px-6 py-4">{getStatusPill(booking.paymentStatus)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onViewDetails(booking)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Details
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => onUpdateStatus(booking)}
+                            className="bg-slate-900 hover:bg-slate-800 text-white"
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Status Update
+                          </Button>
                         </div>
-                      </td>
-                      <td className="px-6 py-2 text-sm text-slate-700 font-medium">
-                        {booking.clientName}
-                      </td>
-                      <td className="px-6 py-2">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm font-medium text-slate-700">
-                            {booking.carModel}
-                          </span>
-                          <span className="bg-gray-100 text-accent-foreground text-xs px-2 py-0.5 rounded-full w-20 text-center">
-                            {booking.licensePlate}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-2 text-sm text-slate-700 font-medium">
-                        {booking.plan}
-                      </td>
-                      <td className="px-6 py-2">
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="text-sm font-semibold text-slate-700">
-                            {booking.payment}
-                          </span>
-                          {getPaymentStatusBadge(booking.paymentStatus)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-2 text-center rounded-sm">
-                        {getStatusButton(booking.status, booking.id)}
-                      </td>
-                      <td className="px-6 py-2 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onViewDetails(booking)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
                       </td>
                     </motion.tr>
                   ))
@@ -347,7 +210,6 @@ export function BookingTable({ onViewDetails }: BookingTableProps) {
             </table>
           </div>
 
-          {/* Pagination */}
           <div className="px-6 py-4 border-t border-gray-100">
             <Pagination
               currentPage={pagination.page}
@@ -361,5 +223,5 @@ export function BookingTable({ onViewDetails }: BookingTableProps) {
         </CardContent>
       </Card>
     </motion.div>
-  );
+  )
 }

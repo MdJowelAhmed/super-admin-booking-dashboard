@@ -8,20 +8,12 @@ import { Car } from '@/types'
  */
 export const selectRoleBasedCars = (state: RootState): Car[] => {
   const { user } = state.auth
-  const { filteredList } = state.cars
 
   if (!user) return []
 
-  // Admin sees all cars
-  if (user.role === UserRole.ADMIN) {
-    return filteredList
-  }
-
-  // Business users see only their cars
-  if (user.role === UserRole.EMPLOYEE && user.businessId) {
-    return filteredList.filter((car) => car.businessId === user.businessId)
-  }
-
+  // NOTE: There is currently no `cars` slice in the store.
+  // Keep selectors stable for callers, but return empty until cars state is added.
+  void UserRole
   return []
 }
 
@@ -30,10 +22,7 @@ export const selectRoleBasedCars = (state: RootState): Car[] => {
  */
 export const selectPaginatedRoleBasedCars = (state: RootState): Car[] => {
   const roleBasedCars = selectRoleBasedCars(state)
-  const { pagination } = state.cars
-  
-  const startIndex = (pagination.page - 1) * pagination.limit
-  return roleBasedCars.slice(startIndex, startIndex + pagination.limit)
+  return roleBasedCars
 }
 
 /**
@@ -48,8 +37,8 @@ export const selectRoleBasedCarsCount = (state: RootState): number => {
  */
 export const selectRoleBasedTotalPages = (state: RootState): number => {
   const count = selectRoleBasedCarsCount(state)
-  const { limit } = state.cars.pagination
-  return Math.ceil(count / limit)
+  if (count === 0) return 1
+  return 1
 }
 
 /**

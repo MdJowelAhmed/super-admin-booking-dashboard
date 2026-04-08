@@ -291,7 +291,7 @@ export interface Booking {
   payment: string
   carImage?: string
   carName?: string, 
-  paymentStatus: 'Paid' | 'Pending'
+  paymentStatus: 'Paid' | 'Pending' | 'Refunded'
   status: BookingStatus
   businessId?: string // For role-based filtering
   businessName?: string // For display purposes
@@ -322,6 +322,7 @@ export type BookingStatus = 'Upcoming' | 'Runing' | 'Completed'
 export interface BookingFilters {
   search: string
   status: BookingStatus | 'all'
+  paymentStatus: Booking['paymentStatus'] | 'all'
 }
 
 export interface BookingFormData {
@@ -333,7 +334,7 @@ export interface BookingFormData {
   endDate: string
   plan: string
   payment: string
-  paymentStatus: 'Paid' | 'Pending'
+  paymentStatus: Booking['paymentStatus']
   status: BookingStatus
 }
 

@@ -7,11 +7,12 @@ import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { useAppDispatch } from '@/redux/hooks'
 import { addBooking } from '@/redux/slices/bookingSlice'
 import { toast } from '@/utils/toast'
 // import type { BookingStatus, BookingFormData } from '@/types'
 import { cn } from '@/utils/cn' 
+import type { Car as CarType } from '@/types'
 
 const bookingSchema = z.object({
   clientName: z.string().min(2, 'Client name must be at least 2 characters'),
@@ -22,7 +23,7 @@ const bookingSchema = z.object({
   endDate: z.string().min(1, 'End date is required'),
   plan: z.string().min(1, 'Plan is required'),
   payment: z.string().min(1, 'Payment amount is required'),
-  paymentStatus: z.enum(['Paid', 'Pending']),
+  paymentStatus: z.enum(['Paid', 'Pending', 'Refunded']),
   status: z.enum(['Upcoming', 'Runing', 'Completed']),
 })
 
@@ -35,7 +36,7 @@ interface AddBookingModalProps {
 
 export function AddBookingModal({ open, onClose }: AddBookingModalProps) {
   const dispatch = useAppDispatch()
-  const { list: cars } = useAppSelector((state) => state.cars)
+  const cars: CarType[] = []
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
@@ -83,30 +84,12 @@ export function AddBookingModal({ open, onClose }: AddBookingModalProps) {
     }
   }, [open, reset])
 
-  // Calculate plan and payment based on dates
+  // (Disabled) Auto-calculation is currently unavailable because there is no cars slice in the store.
   useEffect(() => {
-    const selectedCar = cars.find((car) => car.id === watchedCarId)
-
-    if (watchedStartDate && watchedEndDate && selectedCar) {
-      const start = new Date(watchedStartDate)
-      const end = new Date(watchedEndDate)
-      const diffTime = Math.abs(end.getTime() - start.getTime())
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-      if (diffDays > 0) {
-        // Set plan based on days
-        if (diffDays === 1) setValue('plan', '1 Day')
-        else if (diffDays <= 7) setValue('plan', `${diffDays} Days`)
-        else if (diffDays <= 14) setValue('plan', `${Math.ceil(diffDays / 7)} Week`)
-        else setValue('plan', '1 Month')
-
-        // Calculate payment based on car price and days
-        const dailyRate = selectedCar.amount || 0
-        const totalAmount = dailyRate * diffDays
-        setValue('payment', `€${totalAmount}`)
-      }
-    }
-  }, [watchedStartDate, watchedEndDate, watchedCarId, cars, setValue])
+    void watchedCarId
+    void watchedStartDate
+    void watchedEndDate
+  }, [watchedCarId, watchedStartDate, watchedEndDate])
 
   const onSubmit = async (data: BookingFormSchema) => {
     setIsSubmitting(true)
@@ -383,6 +366,7 @@ export function AddBookingModal({ open, onClose }: AddBookingModalProps) {
             >
               <option value="Pending">Pending</option>
               <option value="Paid">Paid</option>
+              <option value="Refunded">Refunded</option>
             </select>
             {errors.paymentStatus && (
               <p className="text-xs text-destructive">

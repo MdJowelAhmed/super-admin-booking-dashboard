@@ -48,8 +48,14 @@ export default function MyListingPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-8 rounded-2xl">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+
+
+      </div>
+
+      <div className='flex items-center gap-4 justify-between'>
+
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
             My Listing
@@ -58,25 +64,26 @@ export default function MyListingPage() {
             Manage your properties &amp; their availability
           </p>
         </div>
-        <Button
-          type="button"
-          className="w-full rounded-full bg-[#22C55E] px-6 text-white hover:bg-[#16A34A] lg:w-auto shrink-0"
-          onClick={() => navigate('/my-listing/new')}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Create Listing
-        </Button>
+        <div className='flex items-center gap-4'>
+          <SearchInput
+            value={search}
+            onChange={(v) => {
+              setSearch(v)
+              setPage(1)
+            }}
+            placeholder="Search here"
+            className="max-w-full max-w-xl"
+          />
+          <Button
+            type="button"
+            className="w-full rounded-md bg-[#22C55E] px-6 text-white hover:bg-[#16A34A] lg:w-auto shrink-0"
+            onClick={() => navigate('/my-listing/new')}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Listing
+          </Button>
+        </div>
       </div>
-
-      <SearchInput
-        value={search}
-        onChange={(v) => {
-          setSearch(v)
-          setPage(1)
-        }}
-        placeholder="Search here"
-        className="max-w-full lg:max-w-xl"
-      />
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {pageItems.map((listing) => (

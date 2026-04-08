@@ -30,7 +30,7 @@ const initialState: BookingState = {
     licensePlate: booking.licensePlate,
     plan: booking.plan,
     payment: booking.payment,
-    paymentStatus: booking.paymentStatus as 'Paid' | 'Pending',
+    paymentStatus: booking.paymentStatus as 'Paid' | 'Pending' | 'Refunded',
     status: booking.status as BookingStatus,
   })),
   filteredList: carBookingsData.map((booking) => ({
@@ -46,12 +46,13 @@ const initialState: BookingState = {
     licensePlate: booking.licensePlate,
     plan: booking.plan,
     payment: booking.payment,
-    paymentStatus: booking.paymentStatus as 'Paid' | 'Pending',
+    paymentStatus: booking.paymentStatus as 'Paid' | 'Pending' | 'Refunded',
     status: booking.status as BookingStatus,
   })),
   filters: {
     search: '',
     status: 'all',
+    paymentStatus: 'all',
   },
   pagination: {
     page: 1,
@@ -88,6 +89,7 @@ const bookingSlice = createSlice({
           (booking) =>
             booking.clientName.toLowerCase().includes(searchLower) ||
             booking.carModel.toLowerCase().includes(searchLower) ||
+            (booking.carName ?? '').toLowerCase().includes(searchLower) ||
             booking.id.toLowerCase().includes(searchLower) ||
             booking.licensePlate.toLowerCase().includes(searchLower)
         )
@@ -96,6 +98,11 @@ const bookingSlice = createSlice({
       // Status filter
       if (state.filters.status !== 'all') {
         filtered = filtered.filter((booking) => booking.status === state.filters.status)
+      }
+
+      // Payment status filter
+      if (state.filters.paymentStatus !== 'all') {
+        filtered = filtered.filter((booking) => booking.paymentStatus === state.filters.paymentStatus)
       }
       
       state.filteredList = filtered
@@ -106,7 +113,7 @@ const bookingSlice = createSlice({
       state.pagination.page = 1
     },
     clearFilters: (state) => {
-      state.filters = { search: '', status: 'all' }
+      state.filters = { search: '', status: 'all', paymentStatus: 'all' }
       state.filteredList = state.list
       state.pagination.total = state.list.length
       state.pagination.totalPages = Math.ceil(
@@ -138,6 +145,20 @@ const bookingSlice = createSlice({
         state.filteredList[filteredIndex].status = status
       }
     },
+    updateBookingPaymentStatus: (
+      state,
+      action: PayloadAction<{ id: string; paymentStatus: Booking['paymentStatus'] }>
+    ) => {
+      const { id, paymentStatus } = action.payload
+      const bookingIndex = state.list.findIndex((b) => b.id === id)
+      if (bookingIndex !== -1) {
+        state.list[bookingIndex].paymentStatus = paymentStatus
+      }
+      const filteredIndex = state.filteredList.findIndex((b) => b.id === id)
+      if (filteredIndex !== -1) {
+        state.filteredList[filteredIndex].paymentStatus = paymentStatus
+      }
+    },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload
     },
@@ -162,6 +183,7 @@ export const {
   setPage,
   setLimit,
   updateBookingStatus,
+  updateBookingPaymentStatus,
   addBooking,
   setLoading,
   setError,

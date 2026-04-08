@@ -234,16 +234,17 @@ export default function CreateEditListingPage() {
           </div>
         </div>
 
-        <div className="rounded-xl bg-[#f4f6f8] p-6 space-y-5 border border-border/60">
-          <FormInput
-            label="Service Name"
-            placeholder="e.g. Shoe Shining"
-            required
-            {...register('title')}
-            error={errors.title?.message}
-          />
+        <div className="rounded-xl p-6 space-y-5 border border-border/60 bg-[#F7F7F7]">
+
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <FormInput
+              label="Service Name"
+              placeholder="e.g. Shoe Shining"
+              required
+              {...register('title')}
+              error={errors.title?.message}
+            />
             <FormInput
               label="Price"
               type="number"
@@ -262,52 +263,55 @@ export default function CreateEditListingPage() {
               {...register('discountPrice')}
               error={errors.discountPrice?.message}
             />
+
+            <div className="space-y-1.5">
+              <FormSelect
+                label="Select Schedule"
+                name="scheduleBasis"
+                value={scheduleSelectValue}
+                options={[
+                  { value: SCHEDULE_NONE, label: 'Select schedule type' },
+                  ...SCHEDULE_OPTIONS,
+                ]}
+                onChange={onScheduleTypeChange}
+                placeholder="Daily basis or Hourly basis"
+                required
+                error={errors.scheduleBasis?.message}
+                
+              />
+              {scheduleBasis && (
+                <div className="flex items-center gap-2 rounded-md border bg-white px-3 py-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="shrink-0 text-[#22C55E] hover:text-[#16A34A] hover:bg-[#CEF8DA]"
+                    aria-label="Edit schedule"
+                    onClick={() => openScheduleModal(scheduleBasis)}
+                  >
+                    <Calendar className="h-5 w-5" />
+                  </Button>
+                  <p
+                    className={cn(
+                      'text-sm flex-1',
+                      hourlySchedule?.timeSlots?.length ||
+                        dailySchedule?.selectedDays?.length
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
+                    )}
+                  >
+                    {summarizeSchedule(
+                      scheduleBasis,
+                      dailySchedule,
+                      hourlySchedule
+                    )}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <FormSelect
-              label="Select Schedule"
-              name="scheduleBasis"
-              value={scheduleSelectValue}
-              options={[
-                { value: SCHEDULE_NONE, label: 'Select schedule type' },
-                ...SCHEDULE_OPTIONS,
-              ]}
-              onChange={onScheduleTypeChange}
-              placeholder="Daily basis or Hourly basis"
-              required
-              error={errors.scheduleBasis?.message}
-            />
-            {scheduleBasis && (
-              <div className="flex items-center gap-2 rounded-md border bg-white px-3 py-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="shrink-0 text-[#22C55E] hover:text-[#16A34A] hover:bg-[#CEF8DA]"
-                  aria-label="Edit schedule"
-                  onClick={() => openScheduleModal(scheduleBasis)}
-                >
-                  <Calendar className="h-5 w-5" />
-                </Button>
-                <p
-                  className={cn(
-                    'text-sm flex-1',
-                  hourlySchedule?.timeSlots?.length ||
-                    dailySchedule?.selectedDays?.length
-                    ? 'text-foreground'
-                    : 'text-muted-foreground'
-                  )}
-                >
-                  {summarizeSchedule(
-                    scheduleBasis,
-                    dailySchedule,
-                    hourlySchedule
-                  )}
-                </p>
-              </div>
-            )}
-          </div>
+
 
           <FormTextarea
             label="Description"

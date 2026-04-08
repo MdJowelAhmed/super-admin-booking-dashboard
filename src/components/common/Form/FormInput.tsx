@@ -14,7 +14,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
     const inputId = id || props.name
 
     return (
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 ">
         {label && (
           <Label htmlFor={inputId} className={cn(error && 'text-destructive')}>
             {label}
@@ -24,7 +24,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         <Input
           ref={ref}
           id={inputId}
-          className={cn(className)}
+          className={cn(className, 'bg-[#EBEBEB]')}
           error={!!error}
           {...props}
         />

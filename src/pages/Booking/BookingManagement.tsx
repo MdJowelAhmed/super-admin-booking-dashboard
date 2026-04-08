@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { BookingStatCard } from './BookingStatCard'
 import { BookingTable } from './BookingTable'
 // import { AddBookingModal } from './components/AddBookingModal'
 import { BookingDetailsModal } from './components/BookingDetailsModal'
+import { StatusUpdateModal } from './components/StatusUpdateModal'
 import type { Booking } from '@/types'
 
 const BookingManagement = () => {
   // const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
 
   // const handleAddBooking = () => {
@@ -19,16 +20,28 @@ const BookingManagement = () => {
     setIsDetailsModalOpen(true)
   }
 
+  const handleOpenStatusUpdate = (booking: Booking) => {
+    setSelectedBooking(booking)
+    setIsStatusModalOpen(true)
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Stats Grid */}
-      <BookingStatCard />
+    <div className="space-y-6 bg-white p-8 rounded-2xl">
+      <div className='flex items-center justify-between gap-4'>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
+            Booking Management
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">
+            Manage your property reservations and guest requests
+          </p>
+        </div>
+      </div>
+
+
 
       {/* Bookings Table */}
-      <BookingTable
-        // onAddBooking={handleAddBooking}
-        onViewDetails={handleViewDetails}
-      />
+      <BookingTable onViewDetails={handleViewDetails} onUpdateStatus={handleOpenStatusUpdate} />
 
       {/* Add Booking Modal */}
       {/* <AddBookingModal
@@ -41,6 +54,15 @@ const BookingManagement = () => {
         open={isDetailsModalOpen}
         onClose={() => {
           setIsDetailsModalOpen(false)
+          setSelectedBooking(null)
+        }}
+        booking={selectedBooking}
+      />
+
+      <StatusUpdateModal
+        open={isStatusModalOpen}
+        onClose={() => {
+          setIsStatusModalOpen(false)
           setSelectedBooking(null)
         }}
         booking={selectedBooking}
