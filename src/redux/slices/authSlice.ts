@@ -21,10 +21,19 @@ interface AuthState {
   verificationEmail: string | null
 }
 
+function safeParseUser(userStr: string | null): User | null {
+  if (!userStr) return null
+  try {
+    return JSON.parse(userStr) as User
+  } catch {
+    return null
+  }
+}
+
 const initialState: AuthState = {
-  user: null,
+  user: safeParseUser(localStorage.getItem('user')),
   token: localStorage.getItem('token'),
-  isAuthenticated: !!localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('token') && !!localStorage.getItem('user'),
   isLoading: false,
   error: null,
   passwordResetEmail: null,
@@ -75,15 +84,18 @@ const authSlice = createSlice({
     loadUserFromStorage: (state) => {
       const token = localStorage.getItem('token')
       const userStr = localStorage.getItem('user')
-      if (token && userStr) {
-        try {
-          state.user = JSON.parse(userStr)
-          state.token = token
-          state.isAuthenticated = true
-        } catch {
-          state.isAuthenticated = false
-        }
+      const user = safeParseUser(userStr)
+
+      if (token && user) {
+        state.user = user
+        state.token = token
+        state.isAuthenticated = true
+        return
       }
+
+      state.user = null
+      state.token = token
+      state.isAuthenticated = false
     },
   },
 })
