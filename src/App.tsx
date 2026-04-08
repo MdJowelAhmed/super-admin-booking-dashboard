@@ -24,10 +24,6 @@ import ChangePassword from '@/pages/Settings/ChangePassword/ChangePassword'
 import TermsSettings from '@/pages/Settings/Terms/TermsSettings'
 import PrivacySettings from '@/pages/Settings/Privacy/PrivacySettings'
 import BookingManagement from './pages/Booking/BookingManagement'
-import CarList from './pages/carlist/CarList'
-// import AddCar from './pages/carlist/AddCar'
-import ClientManagement from './pages/ClientManagement/ClientManagement'
-import AgencyManagement from './pages/agency-management/AgencyManagement'
 import Calender from './pages/calender/Calender'
 import TransactionsHistory from './pages/transictions-history/TransactionsHistory'
 import FAQ from './pages/FAQ/FAQ'
@@ -116,15 +112,7 @@ function App() {
             } 
           />
           
-          {/* Agency Management - Super Admin Only */}
-          <Route 
-            path="agency-management" 
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
-                <AgencyManagement />
-              </RoleBasedRoute>
-            } 
-          />
+      
           
           {/* Transactions History - Super Admin Only */}
           <Route 
@@ -145,16 +133,7 @@ function App() {
               </RoleBasedRoute>
             } 
           />
-          
-          {/* Car Management - All roles can access */}
-          <Route 
-            path="cars" 
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE]}>
-                <CarList />
-              </RoleBasedRoute>
-            } 
-          />
+     
           
           {/* Calendar - All roles can access */}
           <Route 
@@ -166,8 +145,6 @@ function App() {
             } 
           />
           
-          {/* Client Management */}
-          <Route path="clients" element={<ClientManagement />} />
           
           {/* Product Management */}
           <Route path="products" element={<ProductList />} />

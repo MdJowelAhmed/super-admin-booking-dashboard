@@ -4,8 +4,6 @@ import {
   LayoutDashboard,
   Users,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   User,
   Lock,
   FileText,
@@ -17,7 +15,6 @@ import {
   HelpCircle,
   ListOrdered,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
@@ -41,12 +38,7 @@ const navItems: NavItem[] = [
     allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
   },
 
-  {
-    title: 'Car List',
-    href: '/cars',
-    icon: Car,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE], // All can access
-  },
+ 
   
   {
     title: 'Booking Management',
@@ -56,12 +48,7 @@ const navItems: NavItem[] = [
   },
 
 
-  {
-    title: 'Agency Management',
-    href: '/agency-management',
-    icon: Building,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, ], // Super Admin only
-  },
+ 
   {
     title: 'Calendar',
     href: '/calender',
@@ -74,12 +61,7 @@ const navItems: NavItem[] = [
     icon: CreditCard,
     allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
   },
-  {
-    title: 'Client Management',
-    href: '/clients',
-    icon: Users,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE], // All can access
-  },
+
 ]
 
 const settingsItems: NavItem[] = [

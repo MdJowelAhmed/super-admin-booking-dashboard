@@ -38,11 +38,11 @@ import { toast } from '@/utils/toast'
 import type { BookingStatus, Booking } from "@/types";
 
 interface BookingTableProps {
-  onAddBooking: () => void;
+  // onAddBooking: () => void;
   onViewDetails: (booking: Booking) => void;
 }
 
-export function BookingTable({ onAddBooking, onViewDetails }: BookingTableProps) {
+export function BookingTable({ onViewDetails }: BookingTableProps) {
   const dispatch = useAppDispatch();
 
   // URL state management
@@ -219,11 +219,12 @@ export function BookingTable({ onAddBooking, onViewDetails }: BookingTableProps)
 
             {/* Add Bookings Button */}
             <Button
-              onClick={onAddBooking}
+              // onClick={onAddBooking}
               className="bg-primary-foreground hover:bg-primary/90 text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Bookings
+              {/* Add Bookings Button */}
             </Button>
           </div>
         </CardHeader>

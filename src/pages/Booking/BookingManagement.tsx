@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { BookingStatCard } from './BookingStatCard'
 import { BookingTable } from './BookingTable'
-import { AddBookingModal } from './components/AddBookingModal'
+// import { AddBookingModal } from './components/AddBookingModal'
 import { BookingDetailsModal } from './components/BookingDetailsModal'
 import type { Booking } from '@/types'
 
 const BookingManagement = () => {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  // const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
 
-  const handleAddBooking = () => {
-    setIsAddModalOpen(true)
-  }
+  // const handleAddBooking = () => {
+  //   setIsAddModalOpen(true)
+  // }
 
   const handleViewDetails = (booking: Booking) => {
     setSelectedBooking(booking)
@@ -26,15 +26,15 @@ const BookingManagement = () => {
 
       {/* Bookings Table */}
       <BookingTable
-        onAddBooking={handleAddBooking}
+        // onAddBooking={handleAddBooking}
         onViewDetails={handleViewDetails}
       />
 
       {/* Add Booking Modal */}
-      <AddBookingModal
+      {/* <AddBookingModal
         open={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-      />
+      /> */}
 
       {/* Booking Details Modal */}
       <BookingDetailsModal
