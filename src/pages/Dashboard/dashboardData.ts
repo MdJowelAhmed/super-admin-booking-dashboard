@@ -117,6 +117,26 @@ export const recentBookingsDashboard: RecentBookingItem[] = [
         status: 'pending',
         avatarUrl: 'https://i.pravatar.cc/96?img=47',
     },
+    {
+        id: 'rb-7',
+        customerName: 'John Doe',
+        serviceType: 'AC Repair',
+        startDate: '2026-04-08',
+        endDate: '2026-04-09',
+        amount: 275,
+        status: 'confirmed',
+        avatarUrl: 'https://i.pravatar.cc/96?img=12',
+    },
+    {
+        id: 'rb-6',
+        customerName: 'Jane Smith',
+        serviceType: 'Deep Cleaning',
+        startDate: '2026-04-15',
+        endDate: '2026-04-18',
+        amount: 890,
+        status: 'confirmed',
+        avatarUrl: 'https://i.pravatar.cc/96?img=5',
+    },
 ]
 
 export const carBookingsData = [

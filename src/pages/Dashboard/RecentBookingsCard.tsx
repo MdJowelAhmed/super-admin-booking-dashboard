@@ -73,7 +73,7 @@ export function RecentBookingsCard() {
         </CardHeader>
         <CardContent className="flex-1 pt-0">
           <div
-            className="max-h-[min(360px,calc(100vh-16rem))] space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:#70B72B_#E5E7EB] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[#E5E7EB] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#70B72B]"
+            className="max-h-[min(480px,calc(100vh-16rem))] space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:#70B72B_#E5E7EB] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[#E5E7EB] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#70B72B]"
           >
             {recentBookingsDashboard.map((item, index) => (
               <BookingRow key={item.id} item={item} index={index} />
