@@ -27,6 +27,7 @@ import BookingManagement from './pages/Booking/BookingManagement'
 import Calender from './pages/calender/Calender'
 import TransactionsHistory from './pages/transictions-history/TransactionsHistory'
 import ReviewsRatings from './pages/ReviewsRatings/ReviewsRatings'
+import Support from './pages/Support/Support'
 import FAQ from './pages/FAQ/FAQ'
 import NotFound from './pages/NotFound/NotFound'
 import MyListingPage from './pages/MyListing/MyListingPage'
@@ -142,6 +143,15 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE]}>
                 <ReviewsRatings />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="support"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE]}>
+                <Support />
               </RoleBasedRoute>
             }
           />

@@ -29,6 +29,7 @@ const mockTransactions: Transaction[] = Array.from({ length: 14 }).map((_, idx) 
     createdAt,
     updatedAt,
   }
+  
 })
 
 interface TransactionState {
