@@ -26,6 +26,7 @@ import PrivacySettings from '@/pages/Settings/Privacy/PrivacySettings'
 import BookingManagement from './pages/Booking/BookingManagement'
 import Calender from './pages/calender/Calender'
 import TransactionsHistory from './pages/transictions-history/TransactionsHistory'
+import ReviewsRatings from './pages/ReviewsRatings/ReviewsRatings'
 import FAQ from './pages/FAQ/FAQ'
 import NotFound from './pages/NotFound/NotFound'
 import MyListingPage from './pages/MyListing/MyListingPage'
@@ -134,6 +135,15 @@ function App() {
                 <BookingManagement />
               </RoleBasedRoute>
             } 
+          />
+
+          <Route
+            path="reviews-ratings"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE]}>
+                <ReviewsRatings />
+              </RoleBasedRoute>
+            }
           />
 
           <Route

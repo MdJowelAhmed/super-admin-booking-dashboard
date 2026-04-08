@@ -13,6 +13,7 @@ import {
   HelpCircle,
   ListOrdered,
   LayoutGrid,
+  Star,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -62,6 +63,12 @@ const navItems: NavItem[] = [
     href: '/transactions-history',
     icon: CreditCard,
     allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
+  },
+  {
+    title: 'Reviews & Ratings',
+    href: '/reviews-ratings',
+    icon: Star,
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE],
   },
 
 ]

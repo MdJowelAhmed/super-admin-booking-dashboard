@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Eye, Pencil } from 'lucide-react'
+import { ArrowDownNarrowWide, Eye } from 'lucide-react'
 import { useUrlNumber, useUrlString } from '@/hooks/useUrlState'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { setFilters, setLimit, setPage } from '@/redux/slices/bookingSlice'
@@ -91,7 +91,7 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
 
   const getStatusPill = (status: Booking['paymentStatus']) => {
     const base =
-      'inline-flex items-center px-3 py-1 w-[90px] justify-center text-center rounded-sm text-xs font-medium'
+      'inline-flex items-center px-3 py-2 w-[90px] justify-center text-center rounded-sm text-xs font-medium'
     const styles =
       status === 'Paid'
         ? 'bg-green-100 text-green-800'
@@ -188,18 +188,19 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
                             variant="outline"
                             size="sm"
                             onClick={() => onViewDetails(booking)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                            className="border-none"
                           >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Details
+                            <Eye className="h-5 w-5 mr-2" />
+                       
                           </Button>
                           <Button
                             size="sm"
+                            variant="outline"
                             onClick={() => onUpdateStatus(booking)}
-                            className="bg-slate-900 hover:bg-slate-800 text-white"
+                            className="border-none"
                           >
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Status Update
+                            <ArrowDownNarrowWide className="h-5 w-5 mr-2" />
+                           
                           </Button>
                         </div>
                       </td>

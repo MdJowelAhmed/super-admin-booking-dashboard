@@ -26,17 +26,8 @@ const BookingManagement = () => {
   }
 
   return (
-    <div className="space-y-6 bg-white p-8 rounded-2xl">
-      <div className='flex items-center justify-between gap-4'>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
-            Booking Management
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground md:text-base">
-            Manage your property reservations and guest requests
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6 bg-white  rounded-2xl">
+
 
 
 
