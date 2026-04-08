@@ -3,12 +3,12 @@ import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
 import { AvailableCars, RentalCars, TotalBooking, TotalRevenue } from '@/components/common/svg/DashboardSVG'
 import { StatCard } from './StatCard'
 import { EarningsSummaryChart } from './EarningsSummaryChart'
-import { RentStatusChart } from './RentStatusChart'
+import { RecentBookingsCard } from './RecentBookingsCard'
 import { RecentActivityCard } from './RecentActivityCard'
-import { yearlyData } from './dashboardData'
+import { yearlyData, defaultChartYear } from './dashboardData'
 
 export default function Dashboard() {
-  const [selectedYear, setSelectedYear] = useState('2024')
+  const [selectedYear, setSelectedYear] = useState(defaultChartYear)
 
   const chartData = useMemo(() => yearlyData[selectedYear], [selectedYear])
 
@@ -63,11 +63,10 @@ export default function Dashboard() {
         />
        </div>
        <div className='col-span-4'>
-        <RentStatusChart />
+        <RecentBookingsCard />
        </div>
       </div>
 
-      {/* Recent Activity */}
       <div>
         <RecentActivityCard />
       </div>

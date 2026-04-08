@@ -1,31 +1,128 @@
-// Generate mock data for different years
-export const generateYearData = (year: number) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    const baseRevenue = 50000 + (year - 2021) * 15000
-    const baseUsers = 500 + (year - 2021) * 200
-    const baseOrders = 300 + (year - 2021) * 100
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const
 
-    return months.map((month, index) => {
-        const seasonMultiplier = index >= 10 || index <= 1 ? 1.3 : index >= 5 && index <= 7 ? 0.85 : 1
-        const randomVariation = () => 0.8 + Math.random() * 0.4
-
-        return {
-            month,
-            revenue: Math.round(baseRevenue * seasonMultiplier * randomVariation() * (1 + index * 0.02)),
-            users: Math.round(baseUsers * randomVariation() * (1 + index * 0.05)),
-            orders: Math.round(baseOrders * seasonMultiplier * randomVariation() * (1 + index * 0.03)),
-        }
-    })
+export type ChartDataPoint = {
+    month: string
+    /** Sales Overview chart uses this (Y-axis shows e.g. 5k when revenue is 5000). */
+    revenue: number
+    users: number
+    orders: number
 }
 
-export const yearlyData: Record<string, ReturnType<typeof generateYearData>> = {
-    '2024': generateYearData(2024),
-    '2023': generateYearData(2023),
-    '2022': generateYearData(2022),
-    '2021': generateYearData(2021),
+/** চার্টে ডিফল্ট যে বছর সিলেক্ট থাকবে (রানটাইমে বর্তমান ক্যালেন্ডার বছর) */
+export const PRESENT_YEAR = String(new Date().getFullYear())
+
+/**
+ * বর্তমান বছরের Sales — ১২টা নম্বর Jan→Dec। শুধু এখানে এডিট করলে **এই বছরের** চার্ট বদলাবে।
+ */
+export const salesRevenuePresentYear: readonly number[] = [
+    3200, 4800, 4100, 5500, 7200, 9500, 4000, 7500, 5300, 6800, 4900, 5100,
+]
+
+/** ঐতিহাসিক বছর (বর্তমান বছর বাদে) — ক্যালেন্ডার বছর বাড়লে এখানে নতুন পুরোনো বছর যোগ করুন। */
+const salesRevenueByPastYear: Record<string, readonly number[]> = {
+    '2025': [3200, 4800, 4100, 5500, 7200, 9500, 4000, 7500, 5300, 6800, 4900, 5100],
+    '2024': [2800, 4200, 3900, 5000, 6100, 8200, 3800, 6500, 4800, 5900, 4400, 4600],
+    '2023': [2400, 3600, 3400, 4200, 5200, 6800, 3200, 5400, 4100, 5000, 3800, 4000],
+    '2022': [2000, 3000, 2800, 3500, 4300, 5600, 2700, 4500, 3500, 4200, 3200, 3400],
+    '2021': [1600, 2400, 2200, 2800, 3400, 4400, 2200, 3600, 2900, 3400, 2600, 2800],
 }
 
-export const years = ['2024', '2023', '2022', '2021']
+export const salesRevenueByYear: Record<string, readonly number[]> = {
+    ...salesRevenueByPastYear,
+    [PRESENT_YEAR]: salesRevenuePresentYear,
+}
+
+/** ড্যাশবোর্ড চার্ট ড্রপডাউনের প্রাথমিক সিলেকশন */
+export const defaultChartYear = PRESENT_YEAR
+
+function buildYearlyChartRows(revenues: readonly number[]): ChartDataPoint[] {
+    return MONTHS.map((month, i) => ({
+        month,
+        revenue: revenues[i] ?? 0,
+        users: 0,
+        orders: 0,
+    }))
+}
+
+export const yearlyData: Record<string, ChartDataPoint[]> = Object.fromEntries(
+    Object.entries(salesRevenueByYear).map(([year, rev]) => [year, buildYearlyChartRows(rev)])
+) as Record<string, ChartDataPoint[]>
+
+export const years = Object.keys(salesRevenueByYear).sort((a, b) => Number(b) - Number(a))
+
+export type RecentBookingItem = {
+    id: string
+    customerName: string
+    serviceType: string
+    startDate: string
+    endDate: string
+    amount: number
+    status: 'pending' | 'confirmed'
+    avatarUrl: string
+}
+
+export const recentBookingsDashboard: RecentBookingItem[] = [
+    {
+        id: 'rb-1',
+        customerName: 'Mohammad Shakil',
+        serviceType: 'Shoe Shine',
+        startDate: '2026-03-17',
+        endDate: '2026-03-20',
+        amount: 120,
+        status: 'pending',
+        avatarUrl: 'https://i.pravatar.cc/96?img=12',
+    },
+    {
+        id: 'rb-2',
+        customerName: 'Sarah Chen',
+        serviceType: 'Cleaning',
+        startDate: '2026-03-10',
+        endDate: '2026-03-12',
+        amount: 1200,
+        status: 'confirmed',
+        avatarUrl: 'https://i.pravatar.cc/96?img=5',
+    },
+    {
+        id: 'rb-3',
+        customerName: 'James Wilson',
+        serviceType: 'Plumbing',
+        startDate: '2026-04-02',
+        endDate: '2026-04-04',
+        amount: 450,
+        status: 'confirmed',
+        avatarUrl: 'https://i.pravatar.cc/96?img=33',
+    },
+    {
+        id: 'rb-4',
+        customerName: 'Emily Rodriguez',
+        serviceType: 'Deep Cleaning',
+        startDate: '2026-04-15',
+        endDate: '2026-04-18',
+        amount: 890,
+        status: 'pending',
+        avatarUrl: 'https://i.pravatar.cc/96?img=45',
+    },
+    {
+        id: 'rb-5',
+        customerName: 'David Okonkwo',
+        serviceType: 'AC Repair',
+        startDate: '2026-04-08',
+        endDate: '2026-04-09',
+        amount: 275,
+        status: 'confirmed',
+        avatarUrl: 'https://i.pravatar.cc/96?img=60',
+    },
+    {
+        id: 'rb-6',
+        customerName: 'Priya Patel',
+        serviceType: 'Electrical',
+        startDate: '2026-05-01',
+        endDate: '2026-05-03',
+        amount: 620,
+        status: 'pending',
+        avatarUrl: 'https://i.pravatar.cc/96?img=47',
+    },
+]
 
 export const carBookingsData = [
     {
@@ -98,8 +195,3 @@ export const recentActivityData = [
     { id: 5, action: 'User blocked', user: 'Admin', time: '3 hours ago' },
 ]
 
-export const rentStatusData = [
-    { name: 'Upcoming', value: 45, color: '#3B82F6' },
-    { name: 'Running', value: 58, color: '#06B6D4' },
-    { name: 'Completed', value: 45, color: '#10B981' },
-]
