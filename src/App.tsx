@@ -30,6 +30,7 @@ import ReviewsRatings from './pages/ReviewsRatings/ReviewsRatings'
 import AppSlider from './pages/AppSlider/AppSlider'
 import Subscription from './pages/Subscription/Subscription'
 import NotificationPage from './pages/Notification/NotificationPage'
+import ControllerPage from './pages/Controller/ControllerPage'
 import Support from './pages/Support/Support'
 import FAQ from './pages/FAQ/FAQ'
 import NotFound from './pages/NotFound/NotFound'
@@ -124,6 +125,15 @@ function App() {
                 <TransactionsHistory />
               </RoleBasedRoute>
             } 
+          />
+
+          <Route
+            path="controller"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                <ControllerPage />
+              </RoleBasedRoute>
+            }
           />
           
           {/* Shared Routes - All roles can access */}
