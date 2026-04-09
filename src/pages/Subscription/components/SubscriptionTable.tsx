@@ -37,7 +37,7 @@ export function SubscriptionTable({ rows, onEdit, onDelete }: SubscriptionTableP
             <th className="px-6 py-4 text-left text-sm font-bold">Date</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Price</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
-            <th className="px-6 py-4 text-right text-sm font-bold w-[200px]" aria-label="Row actions" />
+            <th className="px-6 py-4 text-right text-sm font-bold w-[200px]" aria-label="Row actions" >Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
