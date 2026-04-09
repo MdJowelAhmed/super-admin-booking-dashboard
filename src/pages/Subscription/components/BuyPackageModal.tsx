@@ -18,7 +18,7 @@ export function BuyPackageModal({ open, onClose, onSelectPackage }: BuyPackageMo
       onClose={onClose}
       title="Subscription Packages"
       size="xl"
-      className="sm:max-w-5xl"
+      className="sm:max-w-5xl bg-white"
     >
       <div className="grid gap-4 sm:grid-cols-3 pt-2">
         {PACKAGE_TIERS.map((tier) => (
@@ -63,7 +63,7 @@ export function BuyPackageModal({ open, onClose, onSelectPackage }: BuyPackageMo
 
             <Button
               type="button"
-              className="mt-auto w-full rounded-xl bg-[#6BBF2D] hover:bg-[#5aad26] text-white"
+              className="mt-auto w-full rounded-xl bg-[#6BBF2D] hover:bg-[#5aad26] text-white mt-10"
               onClick={() => {
                 onSelectPackage(tier)
                 onClose()
