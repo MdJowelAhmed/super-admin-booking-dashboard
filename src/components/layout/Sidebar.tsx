@@ -9,15 +9,16 @@ import {
   Shield,
   Info,
   CreditCard,
-  HelpCircle,
+
   ListOrdered,
-  LayoutGrid,
+ 
   Star,
   LifeBuoy,
   ImageIcon,
   Crown,
   Gamepad2,
   Package,
+  ListChecksIcon,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -40,10 +41,15 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS], // Super Admin only
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS], 
   },
 
- 
+  {
+    title: 'My Listing',
+    href: '/my-listing',
+    icon: ListChecksIcon,
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+  },
   
   {
     title: 'Booking Management',
@@ -51,12 +57,7 @@ const navItems: NavItem[] = [
     icon: ListOrdered,
     allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
   },
-  {
-    title: 'My Listing',
-    href: '/my-listing',
-    icon: LayoutGrid,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
-  },
+
   // {
   //   title: 'Calendar',
   //   href: '/calender',
@@ -139,12 +140,12 @@ const settingsItems: NavItem[] = [
     icon: Info,
     allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
   },
-  {
-    title: 'FAQ',
-    href: '/settings/faq',
-    icon: HelpCircle,
-    allowedRoles: [UserRole.SUPER_ADMIN],
-  },
+  // {
+  //   title: 'FAQ',
+  //   href: '/settings/faq',
+  //   icon: HelpCircle,
+  //   allowedRoles: [UserRole.SUPER_ADMIN],
+  // },
 ]
 
 export function Sidebar() {

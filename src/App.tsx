@@ -89,14 +89,16 @@ function App() {
         >
           <Route index element={<RoleBasedRedirect />} />
           
-          {/* Super Admin Only Routes */}
-          <Route 
-            path="dashboard" 
+          {/* Dashboard — all authenticated app roles */}
+          <Route
+            path="dashboard"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+              <RoleBasedRoute
+                allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}
+              >
                 <Dashboard />
               </RoleBasedRoute>
-            } 
+            }
           />
           
           {/* User Management - Super Admin Only */}
