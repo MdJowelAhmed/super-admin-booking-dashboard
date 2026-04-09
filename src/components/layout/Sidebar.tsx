@@ -18,6 +18,7 @@ import {
   ImageIcon,
   Crown,
   Gamepad2,
+  Package,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -86,6 +87,12 @@ const navItems: NavItem[] = [
     href: '/app-slider',
     icon: ImageIcon,
     allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+  },
+  {
+    title: 'Subscription Package',
+    href: '/subscription-packages',
+    icon: Package,
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   {
     title: 'Subscription',

@@ -24,6 +24,7 @@ const routeTitles: Record<string, string> = {
   '/transactions-history': 'Transactions History',
   '/reviews-ratings': 'Reviews & Ratings',
   '/notification': 'Notification',
+  '/subscription-packages': 'Subscription Package',
   '/support': 'Support',
   '/client-management': 'Client Management',
   '/agency-management': 'Agency Management',

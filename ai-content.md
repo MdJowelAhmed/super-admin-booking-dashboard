@@ -83,6 +83,7 @@ src/
 │   ├── AgencyManagement/   # PascalCase (not agency-management)
 │   ├── Calendar/           # Correct spelling (not calender)
 │   ├── TransactionsHistory/ # Correct spelling (not transictions-history)
+│   ├── SubscriptionPackage/ # Super-admin: subscription plan cards (CRUD)
 │   ├── Controller/         # Super-admin: host/business controller accounts
 │   ├── FAQ/
 │   ├── Settings/           # Profile, Password, Terms, Privacy, FAQ

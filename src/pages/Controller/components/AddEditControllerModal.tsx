@@ -130,6 +130,7 @@ export function AddEditControllerModal({
       onClose={onClose}
       title={mode === 'create' ? 'Add controller' : 'Edit controller'}
       size="md"
+      className="bg-white rounded-2xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
         <FormInput

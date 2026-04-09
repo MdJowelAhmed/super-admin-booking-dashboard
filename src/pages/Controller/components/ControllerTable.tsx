@@ -32,13 +32,13 @@ export function ControllerTable({ rows, onEdit, onDelete }: ControllerTableProps
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[800px]">
         <thead>
-          <tr className="bg-[#6BBF2D] text-white">
+          <tr className="bg-primary text-white">
             <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Email</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Phone</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Role</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Created</th>
-            <th className="px-6 py-4 text-right text-sm font-bold w-[200px]" aria-label="Actions" />
+            <th className="px-6 py-4 text-right text-sm font-bold w-[200px]" aria-label="Actions" >Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
