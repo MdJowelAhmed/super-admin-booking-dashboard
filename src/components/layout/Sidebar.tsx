@@ -7,8 +7,7 @@ import {
   Lock,
   FileText,
   Shield,
- 
-  Calendar,
+  Info,
   CreditCard,
   HelpCircle,
   ListOrdered,
@@ -41,7 +40,7 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS], // Super Admin only
   },
 
  
@@ -58,17 +57,17 @@ const navItems: NavItem[] = [
     icon: LayoutGrid,
     allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
   },
-  {
-    title: 'Calendar',
-    href: '/calender',
-    icon: Calendar,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
-  },
+  // {
+  //   title: 'Calendar',
+  //   href: '/calender',
+  //   icon: Calendar,
+  //   allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+  // },
   {
     title: 'Transactions History',
     href: '/transactions-history',
     icon: CreditCard,
-    allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.BUSINESS], // Super Admin only
   },
   {
     title: 'Controller',
@@ -126,13 +125,19 @@ const settingsItems: NavItem[] = [
     title: 'Terms',
     href: '/settings/terms',
     icon: FileText,
-    allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'Privacy',
     href: '/settings/privacy',
     icon: Shield,
-    allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+  },
+  {
+    title: 'About Us',
+    href: '/settings/about-us',
+    icon: Info,
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'FAQ',

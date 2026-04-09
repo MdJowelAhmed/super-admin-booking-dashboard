@@ -36,6 +36,7 @@ const routeTitles: Record<string, string> = {
   '/settings/password': 'Change Password',
   '/settings/terms': 'Terms & Conditions',
   '/settings/privacy': 'Privacy Policy',
+  '/settings/about-us': 'About Us',
 }
 
 export function Header() {

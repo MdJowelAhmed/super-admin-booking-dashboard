@@ -23,6 +23,7 @@ import ProfileSettings from '@/pages/Settings/Profile/ProfileSettings'
 import ChangePassword from '@/pages/Settings/ChangePassword/ChangePassword'
 import TermsSettings from '@/pages/Settings/Terms/TermsSettings'
 import PrivacySettings from '@/pages/Settings/Privacy/PrivacySettings'
+import AboutUsSettings from '@/pages/Settings/AboutUs/AboutUsSettings'
 import BookingManagement from './pages/Booking/BookingManagement'
 import Calender from './pages/calender/Calender'
 import TransactionsHistory from './pages/transictions-history/TransactionsHistory'
@@ -250,6 +251,7 @@ function App() {
             <Route path="password" element={<ChangePassword />} />
             <Route path="terms" element={<TermsSettings />} />
             <Route path="privacy" element={<PrivacySettings />} />
+            <Route path="about-us" element={<AboutUsSettings />} />
             <Route 
               path="faq" 
               element={
