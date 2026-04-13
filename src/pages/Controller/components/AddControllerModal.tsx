@@ -83,7 +83,7 @@ export function AddControllerModal({
   }
 
   return (
-    <ModalWrapper open={open} onClose={onClose} title="Add controller" size="md">
+    <ModalWrapper open={open} onClose={onClose} title="Add controller" size="md" className="max-w-xl bg-white">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
         <FormInput label="Name" required {...register('name')} error={errors.name?.message} />
         <FormInput

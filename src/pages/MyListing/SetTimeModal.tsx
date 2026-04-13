@@ -158,8 +158,8 @@ export function SetTimeModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col gap-4 sm:max-w-xl">
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()} >
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col gap-4 sm:max-w-xl bg-white">
         <DialogHeader>
           <DialogTitle>Set time</DialogTitle>
         </DialogHeader>
