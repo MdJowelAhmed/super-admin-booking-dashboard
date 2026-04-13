@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CardContent } from '@/components/ui/card'
 import { Pagination } from '@/components/common/Pagination'
@@ -8,6 +10,7 @@ import { useUrlNumber } from '@/hooks/useUrlState'
 import { mockControllers, type ControllerAccount } from './controllerData'
 import { ControllerTable } from './components/ControllerTable'
 import { ControllerDetailsModal } from './components/ControllerDetailsModal'
+import { AddControllerModal } from './components/AddControllerModal'
 import { toast } from '@/utils/toast'
 
 export default function ControllerPage() {
@@ -19,6 +22,7 @@ export default function ControllerPage() {
   const [detailsTarget, setDetailsTarget] = useState<ControllerAccount | null>(null)
   const [acceptTarget, setAcceptTarget] = useState<ControllerAccount | null>(null)
   const [rejectTarget, setRejectTarget] = useState<ControllerAccount | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
 
   const filteredRows = useMemo(() => rows.filter((r) => r.role === tab), [rows, tab])
   const totalItems = filteredRows.length
@@ -57,6 +61,29 @@ export default function ControllerPage() {
     setRejectTarget(null)
   }
 
+  const handleAddController = (payload: {
+    name: string
+    email: string
+    phone: string
+    password: string
+    role: ControllerAccount['role']
+  }) => {
+    setRows((prev) => [
+      {
+        id: crypto.randomUUID(),
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        password: payload.password,
+        role: payload.role,
+        status: 'accepted',
+        createdAt: new Date().toISOString(),
+        contact: payload.phone,
+      },
+      ...prev,
+    ])
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -74,6 +101,14 @@ export default function ControllerPage() {
               Review host and business accounts and approve or reject pending requests
             </p>
           </div>
+          <Button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className="shrink-0 gap-2 rounded-md bg-primary text-white hover:bg-[#5aad26]"
+          >
+            <Plus className="h-5 w-5" />
+            Add New Controller
+          </Button>
         </div>
 
         <CardContent className="p-0">
@@ -155,6 +190,13 @@ export default function ControllerPage() {
         row={detailsTarget}
         onAccept={requestAccept}
         onReject={requestReject}
+      />
+
+      <AddControllerModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        defaultRole={tab}
+        onSave={handleAddController}
       />
     </motion.div>
   )
