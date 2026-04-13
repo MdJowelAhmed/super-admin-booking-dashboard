@@ -7,6 +7,7 @@ import { FormInput } from '@/components/common/Form/FormInput'
 import { FormTextarea } from '@/components/common/Form/FormTextarea'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
+import { ArrowLeft } from 'lucide-react'
 
 export type ProviderType = 'business' | 'host'
 
@@ -120,12 +121,17 @@ export function ProviderRegisterBase({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex items-center gap-2">
+        <ArrowLeft className="h-4 w-4" />
+      <a href="/auth/login" className="text-primary">Back to Login</a>
+      </div>
+      <div className="flex  items-center gap-2 w-full justify-center">
         {/* <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
           TB
         </div> */}
         {/* <p className="text-sm text-muted-foreground">Traditional Booking Owner</p> */}
-        <h1 className="text-primary font-medium">{title}</h1>
+       
+        <h1 className="text-primary font-medium text-center">{title}</h1>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6">
