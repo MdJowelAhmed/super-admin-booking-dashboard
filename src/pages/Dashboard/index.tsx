@@ -4,8 +4,22 @@ import { StatCard } from './StatCard'
 import { EarningsSummaryChart } from './EarningsSummaryChart'
 import { SuperAdminPlatformChart } from './SuperAdminPlatformChart'
 import { RecentBookingsCard } from './RecentBookingsCard'
-import { yearlyData, superAdminPlatformYearlyData, defaultChartYear } from './dashboardData'
-import { Calendar, CreditCard, ListOrdered, Settings, CircleDollarSign } from 'lucide-react'
+import {
+  yearlyData,
+  superAdminPlatformYearlyData,
+  superAdminDashboardStats,
+  defaultChartYear,
+} from './dashboardData'
+import {
+  Calendar,
+  CreditCard,
+  ListOrdered,
+  Settings,
+  CircleDollarSign,
+  Users,
+  Home,
+  Building2,
+} from 'lucide-react'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
 
@@ -23,6 +37,40 @@ export default function Dashboard() {
   )
 
   const stats = useMemo(() => {
+    if (isSuperAdmin) {
+      const s = superAdminDashboardStats
+      return [
+        {
+          title: 'Total Users',
+          value: formatCompactNumber(s.totalUsers),
+          change: s.changeUsers,
+          icon: Users,
+          description: 'vs last month',
+        },
+        {
+          title: 'Total Host',
+          value: formatCompactNumber(s.totalHosts),
+          change: s.changeHosts,
+          icon: Home,
+          description: 'vs last month',
+        },
+        {
+          title: 'Total Business',
+          value: formatCompactNumber(s.totalBusinesses),
+          change: s.changeBusinesses,
+          icon: Building2,
+          description: 'vs last month',
+        },
+        {
+          title: 'Total Revenue',
+          value: formatCurrency(s.totalRevenue),
+          change: s.changeRevenue,
+          icon: CircleDollarSign,
+          description: 'vs last month',
+        },
+      ]
+    }
+
     const shared = isHost
       ? [
           {
@@ -87,7 +135,7 @@ export default function Dashboard() {
         description: 'vs last month',
       },
     ]
-  }, [isHost])
+  }, [isHost, isSuperAdmin])
 
   return (
     <div className="space-y-6">
