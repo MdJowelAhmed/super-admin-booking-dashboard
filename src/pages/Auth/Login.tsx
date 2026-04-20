@@ -34,8 +34,6 @@ type DemoAccount = {
   displayRole: string;
   role: AuthUserRole;
   firstName: string;
-  businessId?: string;
-  businessName?: string;
 };
 
 const demoAccounts: DemoAccount[] = [
@@ -46,24 +44,6 @@ const demoAccounts: DemoAccount[] = [
     displayRole: "Super Admin",
     role: "super-admin",
     firstName: "Super Admin",
-  },
-  {
-    id: "2",
-    email: "host@example.com",
-    password: "password",
-    displayRole: "Host",
-    role: "host",
-    firstName: "Host",
-  },
-  {
-    id: "3",
-    email: "business@example.com",
-    password: "password",
-    displayRole: "Business",
-    role: "business",
-    firstName: "Business",
-    businessId: "business-demo-001",
-    businessName: "Demo Property Co.",
   },
 ];
 
@@ -109,8 +89,6 @@ export default function Login() {
             firstName: found.firstName,
             lastName: "User",
             role: found.role,
-            businessId: found.businessId,
-            businessName: found.businessName,
           },
           token: "mock-jwt-token-" + Date.now(),
         })

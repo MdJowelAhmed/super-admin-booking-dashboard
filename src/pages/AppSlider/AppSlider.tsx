@@ -13,10 +13,8 @@ import {
   type AppSliderItem,
   type AppSliderTargetType,
 } from './sliderData'
-import { isAppSliderOwner } from './sliderOwnership'
 import { CreateEditSliderModal } from './components/CreateEditSliderModal'
 import { AppSliderTable } from './components/AppSliderTable'
-import { toast } from '@/utils/toast'
 
 function nextDisplaySerial(sliders: AppSliderItem[]): string {
   const nums = sliders
@@ -26,16 +24,11 @@ function nextDisplaySerial(sliders: AppSliderItem[]): string {
   return `#${next}`
 }
 
-function roleToSliderTargetType(role: string): AppSliderTargetType {
-  if (role === UserRole.BUSINESS) return 'business'
-  return 'host'
-}
-
 export default function AppSlider() {
   const { user } = useAppSelector((state) => state.auth)
   const role = user?.role ?? ''
   const isSuperAdmin = role === UserRole.SUPER_ADMIN
-  const defaultTargetType = roleToSliderTargetType(role)
+  const defaultTargetType: AppSliderTargetType = 'host'
 
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
@@ -61,28 +54,12 @@ export default function AppSlider() {
   }
 
   const openEdit = (slider: AppSliderItem) => {
-    if (!isSuperAdmin && !isAppSliderOwner(slider, user?.email)) {
-      toast({
-        variant: 'destructive',
-        title: 'Cannot edit this slider',
-        description: 'You can only edit sliders you created.',
-      })
-      return
-    }
     setModalMode('edit')
     setEditingSlider(slider)
     setCreateEditOpen(true)
   }
 
   const requestDelete = (slider: AppSliderItem) => {
-    if (!isSuperAdmin && !isAppSliderOwner(slider, user?.email)) {
-      toast({
-        variant: 'destructive',
-        title: 'Cannot delete this slider',
-        description: 'You can only delete sliders you created.',
-      })
-      return
-    }
     setDeleteTarget(slider)
   }
 
@@ -110,14 +87,6 @@ export default function AppSlider() {
         ]
       })
     } else if (editingSlider) {
-      if (!isSuperAdmin && !isAppSliderOwner(editingSlider, user?.email)) {
-        toast({
-          variant: 'destructive',
-          title: 'Cannot save',
-          description: 'You can only update sliders you created.',
-        })
-        return
-      }
       setSliders((prev) =>
         prev.map((s) =>
           s.id === editingSlider.id
@@ -136,10 +105,6 @@ export default function AppSlider() {
 
   const confirmDelete = () => {
     if (!deleteTarget) return
-    if (!isSuperAdmin && !isAppSliderOwner(deleteTarget, user?.email)) {
-      setDeleteTarget(null)
-      return
-    }
     setSliders((prev) => prev.filter((s) => s.id !== deleteTarget.id))
     setDeleteTarget(null)
   }
@@ -158,9 +123,7 @@ export default function AppSlider() {
               App Slider
             </h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              {isSuperAdmin
-                ? 'Create, edit, or delete app banners. Choose whether each banner is for the host or business app.'
-                : 'Create sliders for the guest app. You can edit or delete only the sliders tied to your account email.'}
+              Create, edit, or delete app banners. Choose whether each banner is for the host or business app.
             </p>
           </div>
 

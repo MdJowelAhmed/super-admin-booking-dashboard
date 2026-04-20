@@ -1,18 +1,16 @@
 import { useAppSelector } from '@/redux/hooks'
-import { UserRole } from '@/types/roles'
 import CreateEditListingPage from './CreateEditListingPage'
-import CreateEditHostListingPage from './CreateEditHostListingPage'
 
-/** `/my-listing/new` — host uses property form page; others use business/service form */
+/** `/my-listing/new` — super-admin only */
 export function MyListingNewPage() {
   const { user } = useAppSelector((s) => s.auth)
-  if (user?.role === UserRole.HOST) return <CreateEditHostListingPage />
+  void user
   return <CreateEditListingPage />
 }
 
-/** `/my-listing/:id/edit` — same split by role */
+/** `/my-listing/:id/edit` — super-admin only */
 export function MyListingEditPage() {
   const { user } = useAppSelector((s) => s.auth)
-  if (user?.role === UserRole.HOST) return <CreateEditHostListingPage />
+  void user
   return <CreateEditListingPage />
 }

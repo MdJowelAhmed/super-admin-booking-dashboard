@@ -44,21 +44,21 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS], 
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
 
   {
     title: 'My Listing',
     href: '/my-listing',
     icon: ListChecksIcon,
-    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   
   {
     title: 'Booking Management',
     href: '/booking-management',
     icon: ListOrdered,
-    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
 
   // {
@@ -83,7 +83,7 @@ const navItems: NavItem[] = [
     title: 'Reviews & Ratings',
     href: '/reviews-ratings',
     icon: Star,
-    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   {
     title: 'App Slider',
@@ -101,13 +101,13 @@ const navItems: NavItem[] = [
     title: 'Subscription',
     href: '/subscription',
     icon: Crown,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   {
     title: 'Support',
     href: '/support',
     icon: LifeBuoy,
-    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS ],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
 
 ]
@@ -117,31 +117,31 @@ const settingsItems: NavItem[] = [
     title: 'Profile',
     href: '/settings/profile',
     icon: User,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   {
     title: 'Password',
     href: '/settings/password',
     icon: Lock,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   {
     title: 'Terms',
     href: '/settings/terms',
     icon: FileText,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   {
     title: 'Privacy',
     href: '/settings/privacy',
     icon: Shield,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   {
     title: 'About Us',
     href: '/settings/about-us',
     icon: Info,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   // {
   //   title: 'FAQ',
@@ -161,18 +161,11 @@ export function Sidebar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const isSettingsActive = location.pathname.startsWith('/settings')
 
-  // 🔍 Console log for debugging
-  console.log('📊 Sidebar Debug Info:');
-  console.log('User:', user);
-  console.log('User Role:', user?.role);
-  console.log('User Role Type:', typeof user?.role);
-
   // Filter navigation items based on user role
   const filteredNavItems = navItems.filter((item) => {
     if (!item.allowedRoles) return true // No restriction
     if (!user) return false
     const hasAccess = item.allowedRoles.includes(user.role as UserRole)
-    console.log(`🔐 ${item.title}: hasAccess=${hasAccess}, userRole=${user.role}, allowedRoles=${item.allowedRoles.join(', ')}`)
     return hasAccess
   })
 

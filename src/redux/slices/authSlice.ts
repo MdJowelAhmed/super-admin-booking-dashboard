@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-export type AuthUserRole = 'super-admin' | 'host' | 'business'
+export type AuthUserRole = 'super-admin'
 
 interface User {
   id: string
@@ -16,11 +16,12 @@ interface User {
 /** Maps legacy stored roles and API values to current AuthUserRole */
 export function normalizeAuthRole(role: string): AuthUserRole {
   if (role === 'super-admin') return 'super-admin'
-  if (role === 'host') return 'host'
-  if (role === 'business') return 'business'
-  if (role === 'admin') return 'host'
-  if (role === 'employee') return 'business'
-  return 'business'
+  // legacy roles → super-admin (host/business removed)
+  if (role === 'host') return 'super-admin'
+  if (role === 'business') return 'super-admin'
+  if (role === 'admin') return 'super-admin'
+  if (role === 'employee') return 'super-admin'
+  return 'super-admin'
 }
 
 interface AuthState {

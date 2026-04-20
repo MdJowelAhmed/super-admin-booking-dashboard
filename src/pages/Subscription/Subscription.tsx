@@ -1,7 +1,5 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { CardContent } from '@/components/ui/card'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
@@ -10,63 +8,25 @@ import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
 import {
   mockSubscriptions,
-  tierToDisplayName,
-  defaultEndsAtFromPurchase,
-  type PackageTier,
   type SubscriptionRow,
-  type SubscriptionAccountType,
 } from './subscriptionData'
 import { SubscriptionTable } from './components/SubscriptionTable'
-import { BuyPackageModal } from './components/BuyPackageModal'
 import { toast } from '@/utils/toast'
 
-function nextDisplaySerial(rows: SubscriptionRow[]): string {
-  const nums = rows
-    .map((r) => parseInt(r.displaySerial.replace(/^#/, ''), 10))
-    .filter(Number.isFinite)
-  const next = (nums.length ? Math.max(...nums) : 1000) + 1
-  return `#${next}`
-}
-
-function roleToAccountType(role: string): SubscriptionAccountType {
-  if (role === UserRole.BUSINESS) return 'business'
-  return 'host'
-}
-
-function displayNameFromUser(user: {
-  firstName?: string
-  lastName?: string
-  email?: string
-}): string {
-  const a = user.firstName?.trim() ?? ''
-  const b = user.lastName?.trim() ?? ''
-  if (a || b) return `${a} ${b}`.trim()
-  return user.email?.split('@')[0] ?? 'User'
-}
+// (purchase flow helpers removed — super-admin only)
 
 export default function Subscription() {
   const { user } = useAppSelector((s) => s.auth)
   const role = user?.role ?? ''
   const isSuperAdmin = role === UserRole.SUPER_ADMIN
-  const isSubscriber = role === UserRole.HOST || role === UserRole.BUSINESS
 
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
 
   const [rows, setRows] = useState<SubscriptionRow[]>(mockSubscriptions)
-  const [buyOpen, setBuyOpen] = useState(false)
   const [cancelTarget, setCancelTarget] = useState<SubscriptionRow | null>(null)
 
-  const subscriberRows = useMemo(() => {
-    if (!isSubscriber || !user?.email) return []
-    const acct = roleToAccountType(role)
-    return rows.filter(
-      (r) =>
-        r.userEmail.toLowerCase() === user.email!.toLowerCase() && r.accountType === acct
-    )
-  }, [rows, isSubscriber, user?.email, role])
-
-  const tableRows = isSuperAdmin ? rows : subscriberRows
+  const tableRows = isSuperAdmin ? rows : []
 
   const totalItems = tableRows.length
   const totalPages = Math.max(1, Math.ceil(totalItems / limit))
@@ -76,35 +36,7 @@ export default function Subscription() {
     return tableRows.slice(start, start + limit)
   }, [tableRows, page, limit])
 
-  const handleSelectPackage = (tier: PackageTier) => {
-    if (!user?.email) {
-      toast({ variant: 'destructive', title: 'You must be signed in to subscribe' })
-      return
-    }
-    const purchasedAt = new Date().toISOString()
-    const endsAt = defaultEndsAtFromPurchase(purchasedAt)
-    setRows((prev) => {
-      const displaySerial = nextDisplaySerial(prev)
-      return [
-        {
-          id: crypto.randomUUID(),
-          displaySerial,
-          packageName: tierToDisplayName(tier),
-          purchasedAt,
-          endsAt,
-          price: tier.price,
-          currency: 'USD',
-          status: 'active',
-          userName: displayNameFromUser(user),
-          userEmail: user.email.trim(),
-          accountType: roleToAccountType(role),
-        },
-        ...prev,
-      ]
-    })
-    setBuyOpen(false)
-    toast({ variant: 'success', title: 'Package purchased' })
-  }
+  // (buy flow removed — super-admin only)
 
   const confirmCancelSubscription = () => {
     if (!cancelTarget) return
@@ -131,36 +63,13 @@ export default function Subscription() {
               Subscription
             </h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              {isSuperAdmin
-                ? 'Review and update all subscriber records'
-                : 'Manage your subscription plan and payment methods'}
+              Review and update all subscriber records
             </p>
           </div>
-          {isSubscriber && (
-            <Button
-              type="button"
-              onClick={() => setBuyOpen(true)}
-              className="shrink-0 gap-2 rounded-md bg-primary text-white hover:bg-[#5aad26]"
-            >
-              <Plus className="h-5 w-5" />
-              Buy New Package
-            </Button>
-          )}
         </div>
 
         <CardContent className="p-0">
-          {isSuperAdmin ? (
-            <SubscriptionTable
-              mode="admin"
-              rows={pageItems}
-            />
-          ) : (
-            <SubscriptionTable
-              mode="subscriber"
-              rows={pageItems}
-              onCancel={setCancelTarget}
-            />
-          )}
+          <SubscriptionTable mode="admin" rows={pageItems} />
           <div className="border-t border-gray-100 px-6 py-4">
             <Pagination
               currentPage={Math.min(page, totalPages)}
@@ -176,14 +85,6 @@ export default function Subscription() {
           </div>
         </CardContent>
       </div>
-
-      {isSubscriber && (
-        <BuyPackageModal
-          open={buyOpen}
-          onClose={() => setBuyOpen(false)}
-          onSelectPackage={handleSelectPackage}
-        />
-      )}
 
       <ConfirmDialog
         open={!!cancelTarget}

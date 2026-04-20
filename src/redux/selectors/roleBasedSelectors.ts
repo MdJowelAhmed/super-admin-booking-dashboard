@@ -28,13 +28,10 @@ export const selectCanModifyItem = (
   const { user } = state.auth
   if (!user) return false
 
-  if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.HOST) {
+  if (user.role === UserRole.SUPER_ADMIN) {
     return true
   }
-
-  if (user.role === UserRole.BUSINESS && user.businessId) {
-    return itemBusinessId === user.businessId
-  }
+  void itemBusinessId
 
   return false
 }

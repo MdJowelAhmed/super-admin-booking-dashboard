@@ -1,11 +1,9 @@
-// Auth roles — exactly three
+// Auth roles — super-admin only (host/business removed)
 export enum UserRole {
   SUPER_ADMIN = 'super-admin',
-  HOST = 'host',
-  BUSINESS = 'business',
 }
 
-const ALL_APP_ROLES = [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]
+const ALL_APP_ROLES = [UserRole.SUPER_ADMIN]
 
 export interface RoutePermission {
   path: string
@@ -41,9 +39,7 @@ export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
 
 export const getDefaultRouteForRole = (role: string): string => {
   if (role === UserRole.SUPER_ADMIN) return '/dashboard'
-  if (role === UserRole.HOST) return '/booking-management'
-  if (role === UserRole.BUSINESS) return '/my-listing'
-  return '/booking-management'
+  return '/dashboard'
 }
 
 export const hasRouteAccess = (userRole: string, routePath: string): boolean => {
@@ -62,11 +58,9 @@ export const hasRouteAccess = (userRole: string, routePath: string): boolean => 
   return false
 }
 
-/** Host + Business may see scoped data on these areas */
+/** No per-role scoping (super-admin only). Kept for compatibility. */
 export const shouldFilterData = (userRole: string, routePath: string): boolean => {
-  const sharedRoutes = ['/cars', '/booking-management', '/calender']
-  return (
-    userRole === UserRole.BUSINESS &&
-    sharedRoutes.some((route) => routePath.startsWith(route))
-  )
+  void userRole
+  void routePath
+  return false
 }

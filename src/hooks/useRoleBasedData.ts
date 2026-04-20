@@ -8,22 +8,15 @@ interface DataItem {
   [key: string]: string | number | undefined
 }
 
-/** Super Admin and Host see all rows; Business sees only its scope. */
+/** Super-admin only: return full dataset when logged in. */
 export const useRoleBasedData = <T extends DataItem>(data: T[]): T[] => {
   const { user } = useAppSelector((state) => state.auth)
 
   return useMemo(() => {
     if (!user) return []
 
-    if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.HOST) {
+    if (user.role === UserRole.SUPER_ADMIN) {
       return data
-    }
-
-    if (user.role === UserRole.BUSINESS && user.businessId) {
-      return data.filter(
-        (item) =>
-          item.businessId === user.businessId || item.userId === user.id
-      )
     }
 
     return []
@@ -33,17 +26,19 @@ export const useRoleBasedData = <T extends DataItem>(data: T[]): T[] => {
 /** @deprecated Use useIsHost — kept for compatibility */
 export const useIsAdmin = (): boolean => {
   const { user } = useAppSelector((state) => state.auth)
-  return user?.role === UserRole.HOST
+  return user?.role === UserRole.SUPER_ADMIN
 }
 
+/** @deprecated Kept for compatibility; host role removed. */
 export const useIsHost = (): boolean => {
   const { user } = useAppSelector((state) => state.auth)
-  return user?.role === UserRole.HOST
+  return user?.role === UserRole.SUPER_ADMIN
 }
 
+/** @deprecated Kept for compatibility; business role removed. */
 export const useIsBusiness = (): boolean => {
   const { user } = useAppSelector((state) => state.auth)
-  return user?.role === UserRole.BUSINESS
+  return user?.role === UserRole.SUPER_ADMIN
 }
 
 export const useBusinessId = (): string | undefined => {
@@ -56,13 +51,10 @@ export const useCanModifyItem = (item: DataItem): boolean => {
 
   if (!user) return false
 
-  if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.HOST) {
+  if (user.role === UserRole.SUPER_ADMIN) {
     return true
   }
 
-  if (user.role === UserRole.BUSINESS) {
-    return item.businessId === user.businessId || item.userId === user.id
-  }
-
+  void item
   return false
 }

@@ -16,8 +16,6 @@ import {
   ForgotPassword,
   VerifyEmail,
   ResetPassword,
-  BusinessProviderRegister,
-  HostProviderRegister,
 } from '@/pages/Auth'
 
 // Dashboard Pages
@@ -50,18 +48,11 @@ import { MyListingEditPage, MyListingNewPage } from './pages/MyListing/MyListing
 function RoleBasedRedirect() {
   const { user } = useAppSelector((state) => state.auth)
   
-  // 🔍 Console log for debugging
-  console.log('🔄 RoleBasedRedirect Debug:')
-  console.log('User:', user)
-  console.log('User Role:', user?.role)
-  
   if (!user) {
-    console.log('❌ No user, redirecting to /auth/login')
     return <Navigate to="/auth/login" replace />
   }
 
   const home = getDefaultRouteForRole(user.role)
-  console.log('✅ Redirecting by role to:', home)
   return <Navigate to={home} replace />
 }
 
@@ -83,8 +74,6 @@ function App() {
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="verify-email" element={<VerifyEmail />} />
           <Route path="reset-password" element={<ResetPassword />} />
-          <Route path="business-provider" element={<BusinessProviderRegister />} />
-          <Route path="host-provider" element={<HostProviderRegister />} />
         </Route>
 
         {/* Protected Dashboard Routes */}
@@ -103,7 +92,7 @@ function App() {
             path="dashboard"
             element={
               <RoleBasedRoute
-                allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}
+                allowedRoles={[UserRole.SUPER_ADMIN]}
               >
                 <Dashboard />
               </RoleBasedRoute>
@@ -162,7 +151,7 @@ function App() {
           <Route 
             path="booking-management" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <BookingManagement />
               </RoleBasedRoute>
             } 
@@ -171,7 +160,7 @@ function App() {
           <Route
             path="reviews-ratings"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <ReviewsRatings />
               </RoleBasedRoute>
             }
@@ -180,7 +169,7 @@ function App() {
           <Route
             path="app-slider"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <AppSlider />
               </RoleBasedRoute>
             }
@@ -189,7 +178,7 @@ function App() {
           <Route
             path="subscription"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <Subscription />
               </RoleBasedRoute>
             }
@@ -198,7 +187,7 @@ function App() {
           <Route
             path="notification"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <NotificationPage />
               </RoleBasedRoute>
             }
@@ -207,7 +196,7 @@ function App() {
           <Route
             path="support"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <Support />
               </RoleBasedRoute>
             }
@@ -216,7 +205,7 @@ function App() {
           <Route
             path="my-listing/new"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <MyListingNewPage />
               </RoleBasedRoute>
             }
@@ -224,7 +213,7 @@ function App() {
           <Route
             path="my-listing/:id/edit"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <MyListingEditPage />
               </RoleBasedRoute>
             }
@@ -232,7 +221,7 @@ function App() {
           <Route
             path="my-listing"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <MyListingPage />
               </RoleBasedRoute>
             }
@@ -243,7 +232,7 @@ function App() {
           <Route 
             path="calender" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <Calender />
               </RoleBasedRoute>
             } 

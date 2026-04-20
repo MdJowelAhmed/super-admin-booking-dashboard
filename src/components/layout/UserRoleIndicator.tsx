@@ -1,7 +1,5 @@
 import { useAppSelector } from '@/redux/hooks'
 import { RoleBadge } from '@/components/common/RoleBadge'
-import { Building2 } from 'lucide-react'
-import { UserRole } from '@/types/roles'
 
 export function UserRoleIndicator() {
   const { user } = useAppSelector((state) => state.auth)
@@ -14,13 +12,6 @@ export function UserRoleIndicator() {
         <span className="text-xs text-muted-foreground">Logged in as</span>
         <RoleBadge role={user.role} />
       </div>
-
-      {user.role === UserRole.BUSINESS && user.businessName && (
-        <div className="flex items-center gap-1.5 border-t pt-2 text-xs text-muted-foreground mt-1">
-          <Building2 className="h-3 w-3 shrink-0" />
-          <span className="truncate">{user.businessName}</span>
-        </div>
-      )}
     </div>
   )
 }
