@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Info, Save, Eye } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,43 +8,60 @@ import { toast } from '@/utils/toast'
 import { motion } from 'framer-motion'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
+import {
+  useGetPlatformSettingsQuery,
+  useUpdatePlatformSettingsMutation,
+} from '@/redux/api/settings'
 
-const defaultAbout = `<h1>About Us</h1>
-<p><em>Last updated: January 2024</em></p>
-
-<h2>Our mission</h2>
-<p>We connect hosts, businesses, and travelers through a reliable booking platform built for clarity, trust, and growth.</p>
-
-<h2>What we do</h2>
-<p>Traditional Booking provides tools to manage listings, bookings, subscriptions, and customer relationships in one place—so you can focus on service, not spreadsheets.</p>
-
-<h2>Our values</h2>
-<ul>
-  <li><strong>Transparency:</strong> Clear terms, pricing, and communication</li>
-  <li><strong>Security:</strong> We take data protection seriously</li>
-  <li><strong>Support:</strong> We are here when you need help</li>
-</ul>
-
-<h2>Contact</h2>
-<p>Questions about the platform? Reach us at <a href="mailto:support@example.com">support@example.com</a>.</p>`
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
+}
 
 export default function AboutUsSettings() {
   const { user } = useAppSelector((state) => state.auth)
   const canManage = user?.role === UserRole.SUPER_ADMIN
 
-  const [about, setAbout] = useState(defaultAbout)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { data, isLoading, isError, isSuccess, error } =
+    useGetPlatformSettingsQuery('aboutUs')
+  const [updateSettings, { isLoading: isSaving }] = useUpdatePlatformSettingsMutation()
+
+  const [about, setAbout] = useState('')
   const [activeTab, setActiveTab] = useState('preview')
 
+  useEffect(() => {
+    if (data == null) return
+    setAbout(typeof data.data === 'string' ? data.data : '')
+  }, [data])
+
   const handleSave = async () => {
-    setIsSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    toast({
-      title: 'About Us updated',
-      description: 'The About Us page has been updated successfully.',
-    })
-    setIsSubmitting(false)
+    try {
+      await updateSettings({ aboutUs: about }).unwrap()
+      toast({
+        title: 'About Us updated',
+        description: 'The About Us page has been updated successfully.',
+      })
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not save About Us',
+        description: getErrorMessage(err),
+      })
+    }
   }
+
+  const previewHtml = isSuccess ? about : ''
 
   return (
     <motion.div
@@ -73,7 +90,8 @@ export default function AboutUsSettings() {
               <div className="flex gap-2">
                 <Button
                   onClick={handleSave}
-                  isLoading={isSubmitting}
+                  disabled={isLoading || isSaving}
+                  isLoading={isSaving}
                   className="bg-primary text-white hover:bg-primary/80"
                 >
                   <Save className="h-4 w-4 mr-2" />
@@ -84,7 +102,11 @@ export default function AboutUsSettings() {
           </div>
         </CardHeader>
         <CardContent>
-          {canManage ? (
+          {isLoading && !data ? (
+            <p className="text-sm text-muted-foreground py-12 text-center">Loading…</p>
+          ) : isError ? (
+            <p className="text-sm text-destructive py-6">{getErrorMessage(error)}</p>
+          ) : canManage ? (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="mb-4">
                 <TabsTrigger value="edit" className="gap-2">
@@ -110,7 +132,7 @@ export default function AboutUsSettings() {
                 <div className="border rounded-xl p-6 min-h-[500px] bg-muted/20">
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: about }}
+                    dangerouslySetInnerHTML={{ __html: previewHtml }}
                   />
                 </div>
               </TabsContent>
@@ -119,7 +141,7 @@ export default function AboutUsSettings() {
             <div className="border rounded-xl p-6 min-h-[500px] bg-muted/20">
               <div
                 className="prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: about }}
+                dangerouslySetInnerHTML={{ __html: previewHtml }}
               />
             </div>
           )}
