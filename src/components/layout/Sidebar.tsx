@@ -47,19 +47,19 @@ const navItems: NavItem[] = [
     allowedRoles: [UserRole.SUPER_ADMIN],
   },
 
-  {
-    title: 'My Listing',
-    href: '/my-listing',
-    icon: ListChecksIcon,
-    allowedRoles: [UserRole.SUPER_ADMIN],
-  },
+  // {
+  //   title: 'My Listing',
+  //   href: '/my-listing',
+  //   icon: ListChecksIcon,
+  //   allowedRoles: [UserRole.SUPER_ADMIN],
+  // },
   
-  {
-    title: 'Booking Management',
-    href: '/booking-management',
-    icon: ListOrdered,
-    allowedRoles: [UserRole.SUPER_ADMIN],
-  },
+  // {
+  //   title: 'Booking Management',
+  //   href: '/booking-management',
+  //   icon: ListOrdered,
+  //   allowedRoles: [UserRole.SUPER_ADMIN],
+  // },
 
   // {
   //   title: 'Calendar',
@@ -103,12 +103,12 @@ const navItems: NavItem[] = [
     icon: Crown,
     allowedRoles: [UserRole.SUPER_ADMIN],
   },
-  {
-    title: 'Support',
-    href: '/support',
-    icon: LifeBuoy,
-    allowedRoles: [UserRole.SUPER_ADMIN],
-  },
+  // {
+  //   title: 'Support',
+  //   href: '/support',
+  //   icon: LifeBuoy,
+  //   allowedRoles: [UserRole.SUPER_ADMIN],
+  // },
 
 ]
 

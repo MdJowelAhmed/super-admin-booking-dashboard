@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { parseJwtPayload } from '@/utils/jwt'
 
 export type AuthUserRole = 'super-admin'
 
@@ -16,6 +17,7 @@ interface User {
 /** Maps legacy stored roles and API values to current AuthUserRole */
 export function normalizeAuthRole(role: string): AuthUserRole {
   if (role === 'super-admin') return 'super-admin'
+  if (role === 'SUPER_ADMIN') return 'super-admin'
   // legacy roles → super-admin (host/business removed)
   if (role === 'host') return 'super-admin'
   if (role === 'business') return 'super-admin'
@@ -34,20 +36,47 @@ interface AuthState {
   verificationEmail: string | null
 }
 
-function safeParseUser(userStr: string | null): User | null {
-  if (!userStr) return null
+function userFromAccessToken(token: string | null): User | null {
+  if (!token) return null
+  const claims = parseJwtPayload<{
+    id?: string
+    email?: string
+    role?: string
+  }>(token)
+  if (!claims?.id && !claims?.email) return null
+  const email = claims.email ?? ''
+  const localPart = email.includes('@') ? email.split('@')[0]! : email
+  return {
+    id: claims.id ?? '',
+    email,
+    firstName: localPart || 'User',
+    lastName: '',
+    role: normalizeAuthRole(claims.role ?? 'super-admin'),
+  }
+}
+
+function readTokenFromStorage(): string | null {
   try {
-    const raw = JSON.parse(userStr) as User
-    return { ...raw, role: normalizeAuthRole(raw.role) }
+    localStorage.removeItem('user')
+    const token = localStorage.getItem('token')
+    if (!token) return null
+    const user = userFromAccessToken(token)
+    if (!user) {
+      localStorage.removeItem('token')
+      return null
+    }
+    return token
   } catch {
     return null
   }
 }
 
+const storedToken = readTokenFromStorage()
+
 const initialState: AuthState = {
-  user: safeParseUser(localStorage.getItem('user')),
-  token: localStorage.getItem('token'),
-  isAuthenticated: !!localStorage.getItem('token') && !!localStorage.getItem('user'),
+  user: userFromAccessToken(storedToken),
+  token: storedToken,
+  isAuthenticated: !!storedToken,
   isLoading: false,
   error: null,
   passwordResetEmail: null,
@@ -73,7 +102,6 @@ const authSlice = createSlice({
       state.token = action.payload.token
       state.error = null
       localStorage.setItem('token', action.payload.token)
-      localStorage.setItem('user', JSON.stringify(user))
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.isLoading = false
@@ -85,7 +113,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false
       state.error = null
       localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      localStorage.removeItem('refreshToken')
     },
     setPasswordResetEmail: (state, action: PayloadAction<string>) => {
       state.passwordResetEmail = action.payload
@@ -100,20 +128,11 @@ const authSlice = createSlice({
       state.isLoading = action.payload
     },
     loadUserFromStorage: (state) => {
-      const token = localStorage.getItem('token')
-      const userStr = localStorage.getItem('user')
-      const user = safeParseUser(userStr)
-
-      if (token && user) {
-        state.user = user
-        state.token = token
-        state.isAuthenticated = true
-        return
-      }
-
-      state.user = null
+      const token = readTokenFromStorage()
+      const user = userFromAccessToken(token)
       state.token = token
-      state.isAuthenticated = false
+      state.user = user
+      state.isAuthenticated = !!token && !!user
     },
   },
 })

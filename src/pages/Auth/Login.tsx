@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,17 +7,18 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   loginStart,
   loginSuccess,
   loginFailure,
+  normalizeAuthRole,
 } from "@/redux/slices/authSlice";
-import type { AuthUserRole } from "@/redux/slices/authSlice";
+import { useLoginMutation } from "@/redux/api/authApi";
 import { cn } from "@/utils/cn";
-import { motion } from "framer-motion";
 import { getDefaultRouteForRole } from "@/types/roles";
+import { toast } from "sonner";
+import { parseJwtPayload } from "@/utils/jwt";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -27,31 +28,36 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-type DemoAccount = {
-  id: string;
-  email: string;
-  password: string;
-  displayRole: string;
-  role: AuthUserRole;
-  firstName: string;
-};
+function loginErrorMessage(err: unknown): string {
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "data" in err &&
+    typeof (err as { data?: { message?: unknown } }).data?.message === "string"
+  ) {
+    return (err as { data: { message: string } }).data.message;
+  }
+  if (err instanceof Error) return err.message;
+  return "An error occurred. Please try again.";
+}
 
-const demoAccounts: DemoAccount[] = [
-  {
-    id: "1",
-    email: "superadmin@example.com",
-    password: "password",
-    displayRole: "Super Admin",
-    role: "super-admin",
-    firstName: "Super Admin",
-  },
-];
+
+
+
 
 export default function Login() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const { isLoading, isAuthenticated, user } = useAppSelector(
+    (state) => state.auth
+  );
+  const [loginRequest] = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    navigate(getDefaultRouteForRole(user.role), { replace: true });
+  }, [isAuthenticated, user, navigate]);
 
   const {
     register,
@@ -70,33 +76,54 @@ export default function Login() {
     dispatch(loginStart());
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const result = await loginRequest({
+        email: data.email,
+        password: data.password,
+      }).unwrap();
 
-      const found = demoAccounts.find(
-        (u) => u.email === data.email && u.password === data.password
-      );
+      const accessToken = result.data?.accessToken;
 
-      if (!found) {
-        dispatch(loginFailure("Invalid email or password"));
+      if (!result.success || !accessToken) {
+        const msg = result.message || "Login failed";
+        dispatch(loginFailure(msg));
+        toast.error(msg);
         return;
       }
+
+      const claims = parseJwtPayload<{
+        id?: string;
+        email?: string;
+        role?: string;
+      }>(accessToken);
+
+      const email = claims?.email ?? data.email;
+      const localPart = email.includes("@") ? email.split("@")[0]! : email;
 
       dispatch(
         loginSuccess({
           user: {
-            id: found.id,
-            email: found.email,
-            firstName: found.firstName,
-            lastName: "User",
-            role: found.role,
+            id: claims?.id ?? "",
+            email,
+            firstName: localPart || "User",
+            lastName: "",
+            role: normalizeAuthRole(claims?.role ?? "super-admin"),
           },
-          token: "mock-jwt-token-" + Date.now(),
+          token: accessToken,
         })
       );
 
-      navigate(getDefaultRouteForRole(found.role), { replace: true });
-    } catch {
-      dispatch(loginFailure("An error occurred. Please try again."));
+      toast.success(result.message || "Logged in successfully");
+
+      navigate(
+        getDefaultRouteForRole(
+          normalizeAuthRole(claims?.role ?? "super-admin")
+        ),
+        { replace: true }
+      );
+    } catch (err) {
+      const msg = loginErrorMessage(err);
+      dispatch(loginFailure(msg));
+      toast.error(msg);
     }
   };
 
@@ -115,16 +142,6 @@ export default function Login() {
           Enter your credentials to access your account
         </p>
       </div>
-
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm"
-        >
-          {error}
-        </motion.div>
-      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
@@ -217,29 +234,7 @@ export default function Login() {
         </Button>
       </form>
 
-      <div className="relative">
-        <Separator />
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-          Demo Credentials
-        </span>
-      </div>
-
-      <div className="p-4 rounded-lg bg-muted/50 border text-sm space-y-3">
-        {demoAccounts.map((acc, index) => (
-          <div key={acc.id}>
-            <div className="space-y-1">
-              <p className="font-semibold text-foreground">{acc.displayRole}</p>
-              <p>
-                <strong>Email:</strong> {acc.email}
-              </p>
-              <p>
-                <strong>Pass:</strong> {acc.password}
-              </p>
-            </div>
-            {index < demoAccounts.length - 1 && <Separator className="my-3" />}
-          </div>
-        ))}
-      </div>
+      
     </div>
   )
 }
