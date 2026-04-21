@@ -187,7 +187,7 @@ export function CreateEditSliderModal({
         </div>
 
         <FormInput
-          label="Banner Name"
+          label="Banner Title"
           placeholder="Discount Banner"
           required
           {...register('name')}
