@@ -6,7 +6,8 @@ export const imageUrl = (path: string) => {
 if (path.startsWith("http://") || path.startsWith("https://")) {
   return path;
 } else {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  return `${baseUrl}/${path}`;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, "");
+  const rel = path.replace(/^\/+/, "");
+  return `${baseUrl}/${rel}`;
 }
 };

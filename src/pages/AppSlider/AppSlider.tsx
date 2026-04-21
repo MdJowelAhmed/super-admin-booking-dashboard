@@ -8,20 +8,34 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useUrlNumber } from '@/hooks/useUrlState'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
-import {
-  mockAppSliders,
-  type AppSliderItem,
-  type AppSliderTargetType,
-} from './sliderData'
+import type { AppSliderItem, AppSliderTargetType } from './sliderData'
 import { CreateEditSliderModal } from './components/CreateEditSliderModal'
 import { AppSliderTable } from './components/AppSliderTable'
+import {
+  apiTypeFromTarget,
+  buildBannerFormData,
+  mapBannerToSliderRow,
+  useAddAppSliderMutation,
+  useDeleteAppSliderMutation,
+  useGetAppSliderQuery,
+  useUpdateAppSliderMutation,
+} from '@/redux/api/appSliderApi'
+import { toast } from '@/utils/toast'
 
-function nextDisplaySerial(sliders: AppSliderItem[]): string {
-  const nums = sliders
-    .map((s) => parseInt(s.displaySerial.replace(/^#/, ''), 10))
-    .filter(Number.isFinite)
-  const next = (nums.length ? Math.max(...nums) : 1000) + 1
-  return `#${next}`
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
 }
 
 export default function AppSlider() {
@@ -33,19 +47,28 @@ export default function AppSlider() {
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
 
-  const [sliders, setSliders] = useState<AppSliderItem[]>(mockAppSliders)
+  const { data, isLoading, isFetching, isError, error } = useGetAppSliderQuery({
+    page,
+    limit,
+  })
+
+  const [addAppSlider] = useAddAppSliderMutation()
+  const [updateAppSlider] = useUpdateAppSliderMutation()
+  const [deleteAppSlider] = useDeleteAppSliderMutation()
+
   const [createEditOpen, setCreateEditOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [editingSlider, setEditingSlider] = useState<AppSliderItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AppSliderItem | null>(null)
 
-  const totalItems = sliders.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / limit))
+  const meta = data?.meta
+  const totalItems = meta?.total ?? 0
+  const totalPages = Math.max(1, meta?.totalPage ?? 1)
 
-  const pageItems = useMemo(() => {
-    const start = (page - 1) * limit
-    return sliders.slice(start, start + limit)
-  }, [sliders, page, limit])
+  const sliders = useMemo(() => {
+    const list = data?.data ?? []
+    return list.map((b, i) => mapBannerToSliderRow(b, i, page, limit))
+  }, [data?.data, page, limit])
 
   const openCreate = () => {
     setModalMode('create')
@@ -63,51 +86,70 @@ export default function AppSlider() {
     setDeleteTarget(slider)
   }
 
-  const handleSave = (payload: {
+  const handleSave = async (payload: {
     name: string
     buttonLabel: string
-    imageUrl: string
+    imageFile: File | null
     targetType: AppSliderTargetType
   }) => {
+    const typeStr = apiTypeFromTarget(payload.targetType)
+    const dataPayload = {
+      name: payload.name,
+      buttonText: payload.buttonLabel,
+      type: typeStr,
+    }
+
     if (modalMode === 'create') {
-      setSliders((prev) => {
-        const displaySerial = nextDisplaySerial(prev)
-        return [
-          {
-            id: crypto.randomUUID(),
-            displaySerial,
-            imageUrl: payload.imageUrl,
-            createdAt: new Date().toISOString(),
-            userEmail: user?.email?.trim() ?? '',
-            name: payload.name,
-            buttonLabel: payload.buttonLabel,
-            targetType: payload.targetType,
-          },
-          ...prev,
-        ]
+      if (!payload.imageFile) {
+        toast({
+          variant: 'destructive',
+          title: 'Please upload a banner image',
+        })
+        throw new Error('Missing image')
+      }
+      const formData = buildBannerFormData(dataPayload, payload.imageFile)
+      await addAppSlider(formData).unwrap()
+      toast({
+        variant: 'success',
+        title: 'Slider created',
       })
-    } else if (editingSlider) {
-      setSliders((prev) =>
-        prev.map((s) =>
-          s.id === editingSlider.id
-            ? {
-                ...s,
-                imageUrl: payload.imageUrl,
-                name: payload.name,
-                buttonLabel: payload.buttonLabel,
-                targetType: payload.targetType,
-              }
-            : s
-        )
-      )
+      return
+    }
+
+    if (!editingSlider) {
+      throw new Error('No slider selected')
+    }
+
+    const formData = buildBannerFormData(
+      dataPayload,
+      payload.imageFile ?? undefined
+    )
+    await updateAppSlider({
+      id: editingSlider.id,
+      formData,
+    }).unwrap()
+    toast({
+      variant: 'success',
+      title: 'Slider updated',
+    })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await deleteAppSlider(deleteTarget.id).unwrap()
+      toast({ variant: 'success', title: 'Slider deleted' })
+      setDeleteTarget(null)
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not delete slider',
+        description: getErrorMessage(err),
+      })
     }
   }
 
-  const confirmDelete = () => {
-    if (!deleteTarget) return
-    setSliders((prev) => prev.filter((s) => s.id !== deleteTarget.id))
-    setDeleteTarget(null)
-  }
+  const listBusy = isLoading || isFetching
 
   return (
     <motion.div
@@ -125,6 +167,11 @@ export default function AppSlider() {
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
               Create, edit, or delete app banners. Choose whether each banner is for the host or business app.
             </p>
+            {isError && (
+              <p className="mt-2 text-sm text-destructive">
+                {getErrorMessage(error)}
+              </p>
+            )}
           </div>
 
           <Button
@@ -139,11 +186,12 @@ export default function AppSlider() {
 
         <CardContent className="p-0">
           <AppSliderTable
-            sliders={pageItems}
+            sliders={sliders}
             isSuperAdmin={isSuperAdmin}
             currentUserEmail={user?.email}
             onEdit={openEdit}
             onDelete={requestDelete}
+            isLoading={listBusy}
           />
           <div className="px-6 py-4 border-t border-gray-100">
             <Pagination

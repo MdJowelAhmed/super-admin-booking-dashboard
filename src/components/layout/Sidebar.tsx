@@ -79,12 +79,12 @@ const navItems: NavItem[] = [
     icon: Gamepad2,
     allowedRoles: [UserRole.SUPER_ADMIN],
   },
-  {
-    title: 'Reviews & Ratings',
-    href: '/reviews-ratings',
-    icon: Star,
-    allowedRoles: [UserRole.SUPER_ADMIN],
-  },
+  // {
+  //   title: 'Reviews & Ratings',
+  //   href: '/reviews-ratings',
+  //   icon: Star,
+  //   allowedRoles: [UserRole.SUPER_ADMIN],
+  // },
   {
     title: 'App Slider',
     href: '/app-slider',

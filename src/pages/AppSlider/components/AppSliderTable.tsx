@@ -25,6 +25,7 @@ interface AppSliderTableProps {
   currentUserEmail?: string | null
   onEdit: (slider: AppSliderItem) => void
   onDelete: (slider: AppSliderItem) => void
+  isLoading?: boolean
 }
 
 export function AppSliderTable({
@@ -33,7 +34,16 @@ export function AppSliderTable({
   currentUserEmail,
   onEdit,
   onDelete,
+  isLoading,
 }: AppSliderTableProps) {
+  if (isLoading && sliders.length === 0) {
+    return (
+      <div className="px-6 py-12 text-center text-sm text-muted-foreground">
+        Loading banners…
+      </div>
+    )
+  }
+
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[960px]">
@@ -73,11 +83,17 @@ export function AppSliderTable({
                 </td>
                 <td className="px-6 py-4">
                   <div className="h-12 w-28 overflow-hidden rounded-md border border-slate-200 bg-muted">
-                    <img
-                      src={slider.imageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+                    {slider.imageUrl ? (
+                      <img
+                        src={slider.imageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                        No image
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 max-w-[220px]">

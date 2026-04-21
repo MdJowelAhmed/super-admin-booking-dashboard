@@ -38,9 +38,25 @@ interface CreateEditSliderModalProps {
   onSave: (payload: {
     name: string
     buttonLabel: string
-    imageUrl: string
+    imageFile: File | null
     targetType: AppSliderTargetType
-  }) => void
+  }) => Promise<void>
+}
+
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
 }
 
 export function CreateEditSliderModal({
@@ -84,11 +100,11 @@ export function CreateEditSliderModal({
     if (mode === 'edit' && slider) {
       reset({
         name: slider.name,
-        buttonLabel: slider.buttonLabel,
+        buttonLabel: slider.buttonLabel === '—' ? '' : slider.buttonLabel,
         targetType: slider.targetType,
       })
       setBannerFile(null)
-      setExistingUrl(slider.imageUrl)
+      setExistingUrl(slider.imageUrl || null)
     } else {
       reset({
         name: '',
@@ -115,26 +131,26 @@ export function CreateEditSliderModal({
 
     setIsSubmitting(true)
     try {
-      let imageUrl = existingUrl ?? ''
-      if (bannerFile) {
-        imageUrl = URL.createObjectURL(bannerFile)
-      }
-
       const targetType: AppSliderTargetType = isSuperAdmin
         ? data.targetType!
         : defaultTargetType
 
-      onSave({
+      await onSave({
         name: data.name.trim(),
         buttonLabel: data.buttonLabel.trim(),
-        imageUrl,
+        imageFile: bannerFile,
         targetType,
       })
-      toast({
-        variant: 'success',
-        title: mode === 'create' ? 'Slider created' : 'Slider updated',
-      })
       onClose()
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Missing image') {
+        return
+      }
+      toast({
+        variant: 'destructive',
+        title: mode === 'create' ? 'Could not create slider' : 'Could not update slider',
+        description: getErrorMessage(err),
+      })
     } finally {
       setIsSubmitting(false)
     }
