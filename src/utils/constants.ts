@@ -1,19 +1,18 @@
 import type { SelectOption } from '@/types'
 
+/** Matches GET /user-managements?role=… (uppercase API values) */
 export const USER_ROLES: SelectOption[] = [
   { value: 'all', label: 'All Roles' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'moderator', label: 'Moderator' },
-  { value: 'editor', label: 'Editor' },
-  { value: 'user', label: 'User' },
+  { value: 'HOST', label: 'Host' },
+  { value: 'USER', label: 'User' },
+  { value: 'SERVICE', label: 'Service' },
 ]
 
+/** Client-side filter on the current result set (API sample uses active / blocked) */
 export const USER_STATUSES: SelectOption[] = [
   { value: 'all', label: 'All Status' },
   { value: 'active', label: 'Active' },
   { value: 'blocked', label: 'Blocked' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'inactive', label: 'Inactive' },
 ]
 
 export const PRODUCT_STATUSES: SelectOption[] = [
@@ -69,6 +68,9 @@ export const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
   moderator: { bg: 'bg-warning/10', text: 'text-warning' },
   editor: { bg: 'bg-success/10', text: 'text-success' },
   user: { bg: 'bg-muted', text: 'text-muted-foreground' },
+  HOST: { bg: 'bg-violet-100', text: 'text-violet-900' },
+  USER: { bg: 'bg-sky-100', text: 'text-sky-900' },
+  SERVICE: { bg: 'bg-amber-100', text: 'text-amber-900' },
 }
 
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']

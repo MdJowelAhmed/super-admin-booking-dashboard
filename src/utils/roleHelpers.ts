@@ -64,6 +64,8 @@ export const getRoleDisplayName = (role: string): string => {
     case 'SERVICE':
     case 'BUSINESS':
       return 'Business'
+    case 'USER':
+      return 'User'
     default:
       return role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Unknown'
   }

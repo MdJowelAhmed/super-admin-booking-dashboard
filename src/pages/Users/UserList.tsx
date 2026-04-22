@@ -1,9 +1,8 @@
-import { useMemo, useEffect } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   SearchInput,
   FilterDropdown,
@@ -12,46 +11,76 @@ import {
   StatusBadge,
 } from '@/components/common'
 import { UserActionMenu } from './components/UserActionMenu'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { setFilters, setPage, setLimit } from '@/redux/slices/userSlice'
 import { useUrlParams } from '@/hooks/useUrlState'
 import { USER_ROLES, USER_STATUSES } from '@/utils/constants'
 import { formatDate, getInitials } from '@/utils/formatters'
 import type { User, TableColumn } from '@/types'
 import { motion } from 'framer-motion'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  mapUserManagementDocToUser,
+  useGetUsersQuery,
+  type ApiUserRoleFilter,
+} from '@/redux/api/userApi'
+
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Failed to load users.'
+}
 
 export default function UserList() {
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const { filteredList, isLoading } = useAppSelector(
-    (state) => state.users
-  )
-
-  // URL-based state management
   const { getParam, getNumberParam, setParam, setParams } = useUrlParams()
-  
+
   const search = getParam('search', '')
   const status = getParam('status', 'all')
-  const role = getParam('role', 'all')
+  const role = getParam('role', 'all') as 'all' | ApiUserRoleFilter
   const page = getNumberParam('page', 1)
   const limit = getNumberParam('limit', 10)
 
-  // Sync URL params with Redux
-  useEffect(() => {
-    dispatch(setFilters({ 
-      search, 
-      status: status as User['status'] | 'all', 
-      role: role as User['role'] | 'all' 
-    }))
-  }, [search, status, role, dispatch])
+  const { data, isLoading, isFetching, isError, error } = useGetUsersQuery({
+    page,
+    limit,
+    role: role === 'all' ? 'all' : role,
+  })
 
-  useEffect(() => {
-    dispatch(setPage(page))
-  }, [page, dispatch])
+  const rows = useMemo(
+    () => (data?.data ?? []).map(mapUserManagementDocToUser),
+    [data?.data]
+  )
 
-  useEffect(() => {
-    dispatch(setLimit(limit))
-  }, [limit, dispatch])
+  const filteredRows = useMemo(() => {
+    let r = rows
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      r = r.filter(
+        (u) =>
+          `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+          (u.rawName?.toLowerCase().includes(q) ?? false) ||
+          u.email.toLowerCase().includes(q) ||
+          u.phone.toLowerCase().includes(q)
+      )
+    }
+    if (status !== 'all') {
+      r = r.filter((u) => u.status === status)
+    }
+    return r
+  }, [rows, search, status])
+
+  const meta = data?.meta
+  const totalItems = meta?.total ?? 0
+  const totalPages = Math.max(1, meta?.totalPage ?? 1)
 
   const columns: TableColumn<User>[] = useMemo(
     () => [
@@ -62,14 +91,16 @@ export default function UserList() {
         render: (_, user) => (
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
-              <AvatarImage src={user.avatar} />
+              <AvatarImage src={user.avatar} alt="" />
               <AvatarFallback>
-                {getInitials(user.firstName, user.lastName)}
+                {getInitials(user.firstName, user.lastName || user.email)}
               </AvatarFallback>
             </Avatar>
             <div>
               <p className="font-medium">
-                {user.firstName} {user.lastName}
+                {user.rawName?.trim()
+                  ? user.rawName
+                  : `${user.firstName} ${user.lastName}`.trim()}
               </p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
@@ -79,7 +110,9 @@ export default function UserList() {
       {
         key: 'phone',
         label: 'Phone',
-        render: (value) => <span className="text-muted-foreground">{value as string}</span>,
+        render: (value) => (
+          <span className="text-muted-foreground">{value as string}</span>
+        ),
       },
       {
         key: 'role',
@@ -98,19 +131,14 @@ export default function UserList() {
         label: 'Joined',
         sortable: true,
         render: (value) => (
-          <span className="text-muted-foreground">{formatDate(value as string)}</span>
+          <span className="text-muted-foreground">
+            {formatDate(value as string)}
+          </span>
         ),
       },
     ],
     []
   )
-
-  // Calculate paginated data
-  const paginatedData = useMemo(() => {
-    const start = (page - 1) * limit
-    const end = start + limit
-    return filteredList.slice(start, end)
-  }, [filteredList, page, limit])
 
   const handleSearch = (value: string) => {
     setParams({ search: value, page: 1 })
@@ -136,6 +164,8 @@ export default function UserList() {
     navigate(`/users/${user.id}`)
   }
 
+  const listBusy = isLoading || isFetching
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -148,24 +178,26 @@ export default function UserList() {
           <div>
             <CardTitle>Users</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Manage your users, view details, and control access
+              Manage users, roles, and account status
             </p>
+            {isError && (
+              <p className="text-sm text-destructive mt-2">{getErrorMessage(error)}</p>
+            )}
           </div>
-          <Button>
+          <Button type="button">
             <Plus className="h-4 w-4 mr-2" />
             Add User
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <SearchInput
               value={search}
               onChange={handleSearch}
-              placeholder="Search by name, email, phone..."
+              placeholder="Search by name, email, phone…"
               className="sm:w-80"
             />
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <FilterDropdown
                 value={status}
                 options={USER_STATUSES}
@@ -181,22 +213,20 @@ export default function UserList() {
             </div>
           </div>
 
-          {/* Table */}
           <DataTable
             columns={columns}
-            data={paginatedData}
-            isLoading={isLoading}
+            data={filteredRows}
+            isLoading={listBusy}
             rowKeyExtractor={(row) => row.id}
             onRowClick={handleRowClick}
             actions={(user) => <UserActionMenu user={user} />}
-            emptyMessage="No users found. Try adjusting your filters."
+            emptyMessage="No users on this page. Try another role filter or page."
           />
 
-          {/* Pagination */}
           <Pagination
-            currentPage={page}
-            totalPages={Math.ceil(filteredList.length / limit)}
-            totalItems={filteredList.length}
+            currentPage={Math.min(page, totalPages)}
+            totalPages={totalPages}
+            totalItems={totalItems}
             itemsPerPage={limit}
             onPageChange={handlePageChange}
             onItemsPerPageChange={handleLimitChange}

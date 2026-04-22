@@ -13,9 +13,25 @@ export interface User {
   address?: string
   city?: string
   country?: string
+  countryCode?: string
+  /** Full name from API before split */
+  rawName?: string
+  isOnline?: boolean
+  lastSeen?: string
+  locationSummary?: string
+  isVerified?: boolean
+  stripeCustomerId?: string
 }
 
-export type UserRole = 'admin' | 'user' | 'moderator' | 'editor'
+export type UserRole =
+  | 'admin'
+  | 'user'
+  | 'moderator'
+  | 'editor'
+  | 'HOST'
+  | 'USER'
+  | 'SERVICE'
+
 export type UserStatus = 'active' | 'blocked' | 'pending' | 'inactive'
 
 export interface UserFilters {

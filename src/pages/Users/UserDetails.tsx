@@ -1,23 +1,49 @@
-
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Shield, Edit, Trash2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Shield,
+  Edit,
+  Trash2,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { StatusBadge } from '@/components/common'
-import { useAppSelector } from '@/redux/hooks'
 import { formatDate, getInitials } from '@/utils/formatters'
 import { motion } from 'framer-motion'
+import {
+  mapUserManagementDocToUser,
+  useGetUserManagementQuery,
+} from '@/redux/api/userApi'
 
 export default function UserDetails() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { list } = useAppSelector((state) => state.users)
 
-  const user = list.find((u) => u.id === id)
+  const { data, isLoading, isError } = useGetUserManagementQuery(id ?? '', {
+    skip: !id,
+  })
 
-  if (!user) {
+  const user = data?.data ? mapUserManagementDocToUser(data.data) : undefined
+
+  if (!id) {
+    return null
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+        Loading user…
+      </div>
+    )
+  }
+
+  if (isError || !user) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <p className="text-lg text-muted-foreground">User not found</p>
@@ -28,6 +54,11 @@ export default function UserDetails() {
     )
   }
 
+  const titleName =
+    user.rawName?.trim() ||
+    `${user.firstName} ${user.lastName}`.trim() ||
+    user.email
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,7 +66,6 @@ export default function UserDetails() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      {/* Back Button */}
       <Button
         variant="ghost"
         onClick={() => navigate('/users')}
@@ -46,30 +76,35 @@ export default function UserDetails() {
       </Button>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Profile Card */}
         <Card className="lg:col-span-1">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={user.avatar} />
+                <AvatarImage src={user.avatar} alt="" />
                 <AvatarFallback className="text-2xl">
-                  {getInitials(user.firstName, user.lastName)}
+                  {getInitials(user.firstName, user.lastName || user.email)}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="text-xl font-semibold">
-                {user.firstName} {user.lastName}
-              </h2>
+              <h2 className="text-xl font-semibold">{titleName}</h2>
               <p className="text-sm text-muted-foreground mb-4">{user.email}</p>
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-4 flex-wrap justify-center">
                 <StatusBadge status={user.role} type="role" />
                 <StatusBadge status={user.status} />
               </div>
+              {user.isOnline !== undefined && (
+                <p className="text-xs text-muted-foreground mb-4">
+                  {user.isOnline ? 'Online' : 'Offline'}
+                  {user.lastSeen
+                    ? ` · Last seen ${formatDate(user.lastSeen)}`
+                    : ''}
+                </p>
+              )}
               <div className="flex gap-2 w-full">
                 <Button variant="outline" className="flex-1">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
-                <Button variant="destructive" size="icon">
+                <Button variant="destructive" size="icon" type="button">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -77,13 +112,11 @@ export default function UserDetails() {
           </CardContent>
         </Card>
 
-        {/* Details Card */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>User Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Contact Information */}
             <div>
               <h3 className="font-medium text-sm text-muted-foreground mb-4">
                 Contact Information
@@ -112,7 +145,6 @@ export default function UserDetails() {
 
             <Separator />
 
-            {/* Location */}
             <div>
               <h3 className="font-medium text-sm text-muted-foreground mb-4">
                 Location
@@ -122,9 +154,9 @@ export default function UserDetails() {
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Address</p>
+                  <p className="text-xs text-muted-foreground">Coordinates (lat, lng)</p>
                   <p className="font-medium">
-                    {user.address || 'N/A'}, {user.city || 'N/A'}, {user.country || 'N/A'}
+                    {user.locationSummary ?? '—'}
                   </p>
                 </div>
               </div>
@@ -132,7 +164,6 @@ export default function UserDetails() {
 
             <Separator />
 
-            {/* Account Information */}
             <div>
               <h3 className="font-medium text-sm text-muted-foreground mb-4">
                 Account Information
@@ -164,16 +195,3 @@ export default function UserDetails() {
     </motion.div>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

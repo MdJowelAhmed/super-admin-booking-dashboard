@@ -15,6 +15,7 @@ import {
   Gamepad2,
   Package,
   LogOut,
+  Users,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -106,6 +107,12 @@ const navItems: NavItem[] = [
     icon: Crown,
     allowedRoles: [UserRole.SUPER_ADMIN],
   },
+  {
+    title: 'User Management',
+    href: '/user-management',
+    icon: Users,
+    allowedRoles: [UserRole.SUPER_ADMIN],
+  }
   // {
   //   title: 'Support',
   //   href: '/support',

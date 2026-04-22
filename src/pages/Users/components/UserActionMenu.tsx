@@ -1,6 +1,6 @@
-import  { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MoreHorizontal, Eye, Edit, Ban, CheckCircle, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Eye, Edit, Ban, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,10 +11,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ConfirmDialog } from '@/components/common'
-import { useAppDispatch } from '@/redux/hooks'
-import { updateUserStatus, deleteUser } from '@/redux/slices/userSlice'
+import { useUpdateUserStatusMutation } from '@/redux/api/userApi'
 import type { User } from '@/types'
 import { toast } from '@/utils/toast'
+
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong.'
+}
 
 interface UserActionMenuProps {
   user: User
@@ -22,52 +37,63 @@ interface UserActionMenuProps {
 
 export function UserActionMenu({ user }: UserActionMenuProps) {
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [updateStatus, { isLoading }] = useUpdateUserStatusMutation()
   const [showBlockDialog, setShowBlockDialog] = useState(false)
+
+  const displayName =
+    user.rawName?.trim() ||
+    `${user.firstName} ${user.lastName}`.trim() ||
+    user.email
 
   const handleView = () => {
     navigate(`/users/${user.id}`)
   }
 
   const handleEdit = () => {
-    // Open edit modal - you can implement this with the modal system
     toast({
       title: 'Edit User',
-      description: `Editing ${user.firstName} ${user.lastName}`,
+      description: `Editing ${displayName}`,
     })
   }
 
-  const handleToggleStatus = () => {
-    if (user.status === 'blocked') {
-      dispatch(updateUserStatus({ id: user.id, status: 'active' }))
+  const handleActivate = async () => {
+    try {
+      await updateStatus({
+        id: user.id,
+        body: { status: 'active' },
+      }).unwrap()
       toast({
-        title: 'User Activated',
-        description: `${user.firstName} ${user.lastName} has been activated.`,
+        title: 'User activated',
+        description: `${displayName} is now active.`,
       })
-    } else {
-      setShowBlockDialog(true)
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Update failed',
+        description: getErrorMessage(err),
+      })
     }
   }
 
-  const handleBlockConfirm = () => {
-    dispatch(updateUserStatus({ id: user.id, status: 'blocked' }))
-    setShowBlockDialog(false)
-    toast({
-      title: 'User Blocked',
-      description: `${user.firstName} ${user.lastName} has been blocked.`,
-      variant: 'destructive',
-    })
-  }
-
-  const handleDeleteConfirm = () => {
-    dispatch(deleteUser(user.id))
-    setShowDeleteDialog(false)
-    toast({
-      title: 'User Deleted',
-      description: `${user.firstName} ${user.lastName} has been deleted.`,
-      variant: 'destructive',
-    })
+  const handleBlockConfirm = async () => {
+    try {
+      await updateStatus({
+        id: user.id,
+        body: { status: 'blocked' },
+      }).unwrap()
+      setShowBlockDialog(false)
+      toast({
+        title: 'User blocked',
+        description: `${displayName} has been blocked.`,
+        variant: 'destructive',
+      })
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Update failed',
+        description: getErrorMessage(err),
+      })
+    }
   }
 
   return (
@@ -90,62 +116,30 @@ export function UserActionMenu({ user }: UserActionMenuProps) {
             Edit User
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleToggleStatus}>
-            {user.status === 'blocked' ? (
-              <>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Activate User
-              </>
-            ) : (
-              <>
-                <Ban className="h-4 w-4 mr-2" />
-                Block User
-              </>
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => setShowDeleteDialog(true)}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete User
-          </DropdownMenuItem>
+          {user.status === 'blocked' ? (
+            <DropdownMenuItem onClick={handleActivate}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Activate User
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={() => setShowBlockDialog(true)}>
+              <Ban className="h-4 w-4 mr-2" />
+              Block User
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Block Confirmation Dialog */}
       <ConfirmDialog
         open={showBlockDialog}
         onClose={() => setShowBlockDialog(false)}
         onConfirm={handleBlockConfirm}
         title="Block User"
-        description={`Are you sure you want to block ${user.firstName} ${user.lastName}? They will no longer be able to access the platform.`}
+        description={`Block ${displayName}? They will no longer be able to access the platform.`}
         confirmText="Block User"
         variant="warning"
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        open={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete User"
-        description={`Are you sure you want to delete ${user.firstName} ${user.lastName}? This action cannot be undone.`}
-        confirmText="Delete"
-        variant="danger"
+        isLoading={isLoading}
       />
     </>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-

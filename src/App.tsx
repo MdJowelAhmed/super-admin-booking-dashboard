@@ -201,6 +201,14 @@ function App() {
               </RoleBasedRoute>
             }
           />
+          <Route
+            path="user-management"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                <UserList />
+              </RoleBasedRoute>
+            }
+          />
 
           <Route
             path="my-listing/new"
