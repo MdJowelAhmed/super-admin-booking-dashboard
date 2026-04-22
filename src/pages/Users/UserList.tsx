@@ -1,26 +1,17 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import {
-  SearchInput,
-  FilterDropdown,
-  DataTable,
-  Pagination,
-  StatusBadge,
-} from '@/components/common'
-import { UserActionMenu } from './components/UserActionMenu'
+import { CardContent } from '@/components/ui/card'
+import { SearchInput, FilterDropdown, Pagination, ConfirmDialog } from '@/components/common'
+import { UserTable } from './components/UserTable'
 import { useUrlParams } from '@/hooks/useUrlState'
 import { USER_ROLES, USER_STATUSES } from '@/utils/constants'
-import { formatDate, getInitials } from '@/utils/formatters'
-import type { User, TableColumn } from '@/types'
+import type { User } from '@/types'
 import { motion } from 'framer-motion'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   mapUserManagementDocToUser,
   useGetUsersQuery,
   type ApiUserRoleFilter,
+  useUpdateUserStatusMutation,
 } from '@/redux/api/userApi'
 
 function getErrorMessage(err: unknown): string {
@@ -55,6 +46,9 @@ export default function UserList() {
     role: role === 'all' ? 'all' : role,
   })
 
+  const [updateStatus, { isLoading: isUpdating }] = useUpdateUserStatusMutation()
+  const [blockTarget, setBlockTarget] = useState<User | null>(null)
+
   const rows = useMemo(
     () => (data?.data ?? []).map(mapUserManagementDocToUser),
     [data?.data]
@@ -82,64 +76,6 @@ export default function UserList() {
   const totalItems = meta?.total ?? 0
   const totalPages = Math.max(1, meta?.totalPage ?? 1)
 
-  const columns: TableColumn<User>[] = useMemo(
-    () => [
-      {
-        key: 'name',
-        label: 'User',
-        sortable: true,
-        render: (_, user) => (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={user.avatar} alt="" />
-              <AvatarFallback>
-                {getInitials(user.firstName, user.lastName || user.email)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">
-                {user.rawName?.trim()
-                  ? user.rawName
-                  : `${user.firstName} ${user.lastName}`.trim()}
-              </p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
-            </div>
-          </div>
-        ),
-      },
-      {
-        key: 'phone',
-        label: 'Phone',
-        render: (value) => (
-          <span className="text-muted-foreground">{value as string}</span>
-        ),
-      },
-      {
-        key: 'role',
-        label: 'Role',
-        sortable: true,
-        render: (value) => <StatusBadge status={value as string} type="role" />,
-      },
-      {
-        key: 'status',
-        label: 'Status',
-        sortable: true,
-        render: (value) => <StatusBadge status={value as string} />,
-      },
-      {
-        key: 'createdAt',
-        label: 'Joined',
-        sortable: true,
-        render: (value) => (
-          <span className="text-muted-foreground">
-            {formatDate(value as string)}
-          </span>
-        ),
-      },
-    ],
-    []
-  )
-
   const handleSearch = (value: string) => {
     setParams({ search: value, page: 1 })
   }
@@ -164,6 +100,22 @@ export default function UserList() {
     navigate(`/users/${user.id}`)
   }
 
+  const handleToggleStatus = (user: User) => {
+    if (user.status === 'blocked') {
+      updateStatus({ id: user.id, body: { status: 'active' } })
+        .unwrap()
+        .catch(() => null)
+      return
+    }
+    setBlockTarget(user)
+  }
+
+  const confirmBlock = async () => {
+    if (!blockTarget) return
+    await updateStatus({ id: blockTarget.id, body: { status: 'blocked' } }).unwrap()
+    setBlockTarget(null)
+  }
+
   const listBusy = isLoading || isFetching
 
   return (
@@ -173,24 +125,25 @@ export default function UserList() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white border-0 shadow-sm rounded-2xl">
+        <div className="flex flex-col gap-2 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <CardTitle>Users</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage users, roles, and account status
+            <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
+              Users
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground md:text-base">
+              Manage users, roles, and account status.
             </p>
             {isError && (
-              <p className="text-sm text-destructive mt-2">{getErrorMessage(error)}</p>
+              <p className="mt-2 text-sm text-destructive">
+                {getErrorMessage(error)}
+              </p>
             )}
           </div>
-          <Button type="button">
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        </div>
+
+        <CardContent className="p-0">
+          <div className="flex flex-col sm:flex-row gap-4 px-6 pb-4 pt-4">
             <SearchInput
               value={search}
               onChange={handleSearch}
@@ -213,26 +166,43 @@ export default function UserList() {
             </div>
           </div>
 
-          <DataTable
-            columns={columns}
-            data={filteredRows}
+          <UserTable
+            users={filteredRows}
+            page={page}
+            limit={limit}
             isLoading={listBusy}
-            rowKeyExtractor={(row) => row.id}
-            onRowClick={handleRowClick}
-            actions={(user) => <UserActionMenu user={user} />}
-            emptyMessage="No users on this page. Try another role filter or page."
+            isUpdating={isUpdating}
+            onView={handleRowClick}
+            onToggleStatus={handleToggleStatus}
           />
 
-          <Pagination
-            currentPage={Math.min(page, totalPages)}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            itemsPerPage={limit}
-            onPageChange={handlePageChange}
-            onItemsPerPageChange={handleLimitChange}
-          />
+          <div className="border-t border-gray-100 px-6 py-4">
+            <Pagination
+              currentPage={Math.min(page, totalPages)}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={limit}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleLimitChange}
+            />
+          </div>
         </CardContent>
-      </Card>
+      </div>
+
+      <ConfirmDialog
+        open={!!blockTarget}
+        onClose={() => setBlockTarget(null)}
+        onConfirm={confirmBlock}
+        title="Block user?"
+        description={
+          blockTarget
+            ? `Block ${blockTarget.rawName?.trim() || blockTarget.email}? They will no longer be able to access the platform.`
+            : ''
+        }
+        confirmText="Block"
+        variant="warning"
+        isLoading={isUpdating}
+      />
     </motion.div>
   )
 }
