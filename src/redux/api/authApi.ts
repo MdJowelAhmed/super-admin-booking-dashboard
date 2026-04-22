@@ -15,15 +15,16 @@ interface LoginCredentials {
     password: string;
 }
 
-interface ChangePasswordPayload {
+export interface ChangePasswordPayload {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
 }
 
-interface ChangePasswordResponse {
+export interface ChangePasswordResponse {
     success: boolean;
     message: string;
+    statusCode?: number;
 }
 
 interface VerifyEmailPayload {
@@ -139,11 +140,12 @@ const authApi = baseApi.injectEndpoints({
             }),
             providesTags: ['Auth'],
         }),
+        /** Authenticated user; Bearer token added by baseApi `prepareHeaders`. */
         changePassword: builder.mutation<ChangePasswordResponse, ChangePasswordPayload>({
-            query: (credentials) => ({
+            query: (body) => ({
                 url: '/auth/change-password',
                 method: 'POST',
-                body: credentials,
+                body,
             }),
             invalidatesTags: ['Auth'],
         }),

@@ -309,6 +309,7 @@ export default function ProfileSettings() {
                   error={errors.email?.message}
                   required
                   {...register('email')}
+                  disabled
                 />
                 <FormInput
                   label="Phone"
@@ -320,44 +321,7 @@ export default function ProfileSettings() {
               </div>
             </div>
 
-            <Separator />
 
-            <div className="space-y-4">
-              <h3 className="font-semibold">Address</h3>
-              <FormInput
-                label="Street Address"
-                placeholder="Enter street address"
-                error={errors.address?.message}
-                {...register('address')}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormInput
-                  label="City"
-                  placeholder="Enter city"
-                  error={errors.city?.message}
-                  {...register('city')}
-                />
-                <FormInput
-                  label="Country"
-                  placeholder="Enter country"
-                  error={errors.country?.message}
-                  {...register('country')}
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <h3 className="font-semibold">Bio</h3>
-              <FormTextarea
-                label="About you"
-                placeholder="Short bio (optional)"
-                error={errors.bio?.message}
-                rows={4}
-                {...register('bio')}
-              />
-            </div>
 
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>
