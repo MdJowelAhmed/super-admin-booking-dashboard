@@ -126,24 +126,10 @@ export default function UserList() {
       className="space-y-6"
     >
       <div className="bg-white border-0 shadow-sm rounded-2xl">
-        <div className="flex flex-col gap-2 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
-              Users
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              Manage users, roles, and account status.
-            </p>
-            {isError && (
-              <p className="mt-2 text-sm text-destructive">
-                {getErrorMessage(error)}
-              </p>
-            )}
-          </div>
-        </div>
+       
 
         <CardContent className="p-0">
-          <div className="flex flex-col sm:flex-row gap-4 px-6 pb-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 px-6 pb-4 pt-8 justify-end">
             <SearchInput
               value={search}
               onChange={handleSearch}
