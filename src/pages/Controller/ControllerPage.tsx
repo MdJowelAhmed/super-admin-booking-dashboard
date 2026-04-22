@@ -92,24 +92,7 @@ export default function ControllerPage() {
       className="space-y-6"
     >
       <div className="rounded-2xl border-0 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
-              Controller
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              Review host and business accounts and approve or reject pending requests
-            </p>
-          </div>
-          <Button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="shrink-0 gap-2 rounded-md bg-primary text-white hover:bg-[#5aad26]"
-          >
-            <Plus className="h-5 w-5" />
-            Add New Controller
-          </Button>
-        </div>
+      
 
         <CardContent className="p-0">
           <Tabs value={tab} onValueChange={(v) => {

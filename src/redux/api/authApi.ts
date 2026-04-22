@@ -49,36 +49,62 @@ interface ResetPasswordResponse {
     message: string;
 }
 
-interface GetMyProfileResponse {
-    success: boolean;
-    message: string;
-    data: {
-        _id: string;
-        name: string;
-        email: string;
-        role: string;
-        profileImage?: string;
-        status: string;
-        isVerified: boolean;
-        isPhoneVerified: boolean;
-        isEmailVerified: boolean;
-        isDeleted: boolean;
-        authProviders: string[];
-        createdAt: string;
-        updatedAt: string;
-        __v: number;
-    };
+/** User document from GET/PATCH /users/profile */
+export interface MyProfileEntity {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    image?: string;
+    /** Some APIs return this key instead of `image` */
+    profileImage?: string;
+    status: string;
+    isVerified: boolean;
+    isPhoneVerified: boolean;
+    isEmailVerified: boolean;
+    isDeleted: boolean;
+    authProviders: string[];
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+    phone?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    bio?: string;
 }
 
-interface UpdateMyProfileResponse {
+export interface GetMyProfileResponse {
     success: boolean;
     message: string;
-    data: GetMyProfileResponse['data'];
+    data: MyProfileEntity;
 }
 
+export interface UpdateMyProfileResponse {
+    success: boolean;
+    message: string;
+    data: MyProfileEntity;
+}
+
+/**
+ * Profile PATCH: multipart body with JSON `data` and optional file field `image`.
+ */
 export interface UpdateMyProfilePayload {
-    name?: string;
-    profileImage?: File | null;
+    data: Record<string, unknown>;
+    image?: File | null;
+}
+
+export function buildProfileUpdateFormData(
+    data: Record<string, unknown>,
+    image?: File | null
+): FormData {
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(data));
+    if (image) {
+        // Third argument sets filename; some backends require it for multipart parsing.
+        formData.append("image", image, image.name);
+    }
+    return formData;
 }
 
 const authApi = baseApi.injectEndpoints({
@@ -202,23 +228,11 @@ const authApi = baseApi.injectEndpoints({
         }),
 
         updateMyProfile: builder.mutation<UpdateMyProfileResponse, UpdateMyProfilePayload>({
-            query: ({ name, profileImage }) => {
-                const formData = new FormData();
-
-                if (name) {
-                    formData.append('name', name);
-                }
-
-                if (profileImage) {
-                    formData.append('profileImage', profileImage);
-                }
-
-                return {
-                    url: '/users/profile',
-                    method: 'PATCH',
-                    body: formData,
-                };
-            },
+            query: ({ data, image }) => ({
+                url: '/users/profile',
+                method: 'PATCH',
+                body: buildProfileUpdateFormData(data, image ?? undefined),
+            }),
             invalidatesTags: ['Auth'],
         }),
 
