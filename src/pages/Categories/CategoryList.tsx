@@ -96,27 +96,13 @@ export default function CategoryList() {
     >
       <div className="bg-white border-0 shadow-sm rounded-2xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between p-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
-              Categories
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              Manage listing categories and amenities for your properties.
-            </p>
-          </div>
+    
 
-          <Button
-            type="button"
-            onClick={() => setShowAddModal(true)}
-            className="rounded-md bg-primary hover:bg-[#5aad26] text-white shrink-0 gap-2"
-          >
-            <Plus className="h-5 w-5" />
-            Add Category
-          </Button>
+      
         </div>
 
         <CardContent className="p-0">
-          <div className="flex flex-col sm:flex-row gap-4 px-6 pb-4">
+          <div className="flex flex-col sm:flex-row gap-4 px-6 pb-4 justify-end">
             <SearchInput
               value={search}
               onChange={handleSearch}
@@ -130,6 +116,14 @@ export default function CategoryList() {
               placeholder="Type"
               className="sm:w-48"
             />
+                <Button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="rounded-md bg-primary hover:bg-[#5aad26] text-white shrink-0 gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Add Category
+          </Button>
           </div>
 
           <CategoryTable
