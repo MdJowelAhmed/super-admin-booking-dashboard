@@ -123,6 +123,7 @@ export function AddEditCategoryModal({
           : 'Update name and type'
       }
       size="md"
+      className="max-w-lg bg-white"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <FormInput

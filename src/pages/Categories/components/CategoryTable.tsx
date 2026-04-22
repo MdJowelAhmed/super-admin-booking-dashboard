@@ -53,8 +53,6 @@ export function CategoryTable({
             <th className="px-6 py-4 text-left text-sm font-bold">S.No</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Type</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Created</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Updated</th>
             <th
               className="px-6 py-4 text-right text-sm font-bold w-[200px]"
               aria-label="Row actions"
@@ -90,16 +88,7 @@ export function CategoryTable({
                 <td className="px-6 py-4">
                   <CategoryTypePill type={category.type} />
                 </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-600">
-                    {formatDate(category.createdAt)}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-600">
-                    {formatDate(category.updatedAt)}
-                  </span>
-                </td>
+               
                 <td className="px-6 py-4">
                   <div className="flex justify-end">
                     <CategoryActionMenu

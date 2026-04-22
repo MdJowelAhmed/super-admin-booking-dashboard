@@ -149,7 +149,8 @@ export function AddEditProductModal({ open, onClose, mode, product }: AddEditPro
           : 'Update the product information'
       }
       size="full"
-    >
+      className="max-w-lg bg-white"
+      >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <FormInput
