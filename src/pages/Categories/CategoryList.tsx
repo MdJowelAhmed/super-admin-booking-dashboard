@@ -1,23 +1,16 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import {
-  SearchInput,
-  FilterDropdown,
-  DataTable,
-  Pagination,
-  StatusBadge,
-} from '@/components/common'
-import { CategoryActionMenu } from './components/CategoryActionMenu'
+import { SearchInput, FilterDropdown, Pagination } from '@/components/common'
+import { CategoryTable } from './components/CategoryTable'
 import { AddEditCategoryModal } from './AddEditCategoryModal'
 import { DeleteCategoryModal } from './DeleteCategoryModal'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { setSelectedCategory } from '@/redux/slices/categorySlice'
 import { useUrlParams } from '@/hooks/useUrlState'
 import { CATEGORY_TYPE_FILTER_OPTIONS } from '@/utils/constants'
-import { formatDate } from '@/utils/formatters'
-import type { Category, CategoryType, TableColumn } from '@/types'
+import type { Category, CategoryType } from '@/types'
 import { motion } from 'framer-motion'
 import {
   mapCategoryFromApi,
@@ -60,48 +53,6 @@ export default function CategoryList() {
     }
   }, [page, filteredList.length, isLoading, setParam])
 
-  const columns: TableColumn<Category>[] = useMemo(
-    () => [
-      {
-        key: 'name',
-        label: 'Name',
-        sortable: true,
-        render: (_, category) => (
-          <p className="font-medium">{category.name}</p>
-        ),
-      },
-      {
-        key: 'type',
-        label: 'Type',
-        sortable: true,
-        render: (value) => (
-          <StatusBadge status={value as string} />
-        ),
-      },
-      {
-        key: 'createdAt',
-        label: 'Created',
-        sortable: true,
-        render: (value) => (
-          <span className="text-muted-foreground">
-            {formatDate(value as string)}
-          </span>
-        ),
-      },
-      {
-        key: 'updatedAt',
-        label: 'Updated',
-        sortable: true,
-        render: (value) => (
-          <span className="text-muted-foreground">
-            {formatDate(value as string)}
-          </span>
-        ),
-      },
-    ],
-    []
-  )
-
   const paginatedData = useMemo(() => {
     const start = (page - 1) * limit
     return filteredList.slice(start, start + limit)
@@ -134,6 +85,7 @@ export default function CategoryList() {
   }
 
   const tableBusy = isLoading || isFetching
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / limit))
 
   return (
     <motion.div
@@ -142,60 +94,65 @@ export default function CategoryList() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white border-0 shadow-sm rounded-2xl">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between p-6">
           <div>
-            <CardTitle>Categories</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage listing categories and amenities
+            <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
+              Categories
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground md:text-base">
+              Manage listing categories and amenities for your properties.
             </p>
           </div>
-          <Button onClick={() => setShowAddModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+
+          <Button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="rounded-md bg-primary hover:bg-[#5aad26] text-white shrink-0 gap-2"
+          >
+            <Plus className="h-5 w-5" />
             Add Category
           </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        </div>
+
+        <CardContent className="p-0">
+          <div className="flex flex-col sm:flex-row gap-4 px-6 pb-4">
             <SearchInput
               value={search}
               onChange={handleSearch}
               placeholder="Search by name..."
-              className="sm:w-80"
+              className="sm:w-80 sm:flex-initial"
             />
             <FilterDropdown
               value={typeFilter}
               options={CATEGORY_TYPE_FILTER_OPTIONS}
               onChange={handleTypeFilter}
               placeholder="Type"
+              className="sm:w-48"
             />
           </div>
 
-          <DataTable
-            columns={columns}
-            data={paginatedData}
+          <CategoryTable
+            categories={paginatedData}
+            page={page}
+            limit={limit}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
             isLoading={tableBusy}
-            rowKeyExtractor={(row) => row.id}
-            actions={(category) => (
-              <CategoryActionMenu
-                category={category}
-                onEdit={() => handleEdit(category)}
-                onDelete={() => handleDelete(category)}
-              />
-            )}
-            emptyMessage="No categories found. Try adjusting filters or add a new one."
           />
 
-          <Pagination
-            currentPage={page}
-            totalPages={Math.max(1, Math.ceil(filteredList.length / limit))}
-            totalItems={filteredList.length}
-            itemsPerPage={limit}
-            onPageChange={handlePageChange}
-            onItemsPerPageChange={handleLimitChange}
-          />
+          <div className="px-6 py-4 border-t border-gray-100">
+            <Pagination
+              currentPage={Math.min(page, totalPages)}
+              totalPages={totalPages}
+              totalItems={filteredList.length}
+              itemsPerPage={limit}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleLimitChange}
+            />
+          </div>
         </CardContent>
-      </Card>
+      </div>
 
       <AddEditCategoryModal
         open={showAddModal}

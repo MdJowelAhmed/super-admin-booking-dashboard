@@ -51,7 +51,7 @@ export function DataTable<T>({
             <tr
               className={cn(
                 'border-b',
-                headerRowClassName ?? 'bg-[#CCF3F5] text-accent'
+                headerRowClassName ?? 'bg-primary text-white'
               )}
             >
               {columns.map((column) => (
