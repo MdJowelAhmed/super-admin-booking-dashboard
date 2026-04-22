@@ -26,6 +26,7 @@ interface ControllerTableProps {
   onDetails: (row: ControllerAccount) => void
   onAccept: (row: ControllerAccount) => void
   onReject: (row: ControllerAccount) => void
+  isLoading?: boolean
 }
 
 function StatusPill({ status }: { status: ControllerAccount['status'] }) {
@@ -33,7 +34,7 @@ function StatusPill({ status }: { status: ControllerAccount['status'] }) {
     <span
       className={cn(
         'inline-flex rounded-full border px-3 py-0.5 text-xs font-medium capitalize',
-        status === 'accepted'
+        status === 'approved'
           ? 'bg-[#E7F6D5] border-[#6BBF2D] text-[#2E6A0D]'
           : status === 'rejected'
             ? 'bg-red-50 border-red-300 text-red-800'
@@ -45,7 +46,21 @@ function StatusPill({ status }: { status: ControllerAccount['status'] }) {
   )
 }
 
-export function ControllerTable({ rows, onDetails, onAccept, onReject }: ControllerTableProps) {
+export function ControllerTable({
+  rows,
+  onDetails,
+  onAccept,
+  onReject,
+  isLoading,
+}: ControllerTableProps) {
+  if (isLoading && rows.length === 0) {
+    return (
+      <div className="px-6 py-12 text-center text-sm text-muted-foreground">
+        Loading requests…
+      </div>
+    )
+  }
+
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[920px]">
@@ -64,7 +79,7 @@ export function ControllerTable({ rows, onDetails, onAccept, onReject }: Control
           {rows.length === 0 ? (
             <tr>
               <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                No controllers yet. Add one to get started.
+                No business requests for this tab.
               </td>
             </tr>
           ) : (

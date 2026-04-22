@@ -57,7 +57,14 @@ export const getRoleDisplayName = (role: string): string => {
   switch (role) {
     case UserRole.SUPER_ADMIN:
       return 'Super Admin'
+    case 'host':
+    case 'HOST':
+      return 'Host'
+    case 'business':
+    case 'SERVICE':
+    case 'BUSINESS':
+      return 'Business'
     default:
-      return 'Unknown'
+      return role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Unknown'
   }
 }

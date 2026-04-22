@@ -1,6 +1,7 @@
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
+import { imageUrl } from '@/components/common/imageUrl'
 import type { ControllerAccount } from '../controllerData'
 
 function Field({ label, value }: { label: string; value?: string }) {
@@ -19,7 +20,7 @@ function StatusBadge({ status }: { status: ControllerAccount['status'] }) {
     <span
       className={cn(
         'inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-medium capitalize',
-        status === 'accepted'
+        status === 'approved'
           ? 'bg-[#E7F6D5] border-[#6BBF2D] text-[#2E6A0D]'
           : status === 'rejected'
             ? 'bg-red-50 border-red-300 text-red-800'
@@ -60,15 +61,29 @@ export function ControllerDetailsModal({
             <StatusBadge status={row.status} />
           </div>
 
+          {row.image?.trim() ? (
+            <div className="rounded-lg overflow-hidden border border-slate-200 max-h-40 w-full max-w-xs">
+              <img
+                src={imageUrl(row.image)}
+                alt=""
+                className="h-full w-full object-cover max-h-40"
+              />
+            </div>
+          ) : null}
+
           <div className="rounded-xl border border-slate-200 bg-white px-4 py-2">
             <Field label="Role" value={row.role} />
+            <Field label="Owner" value={row.ownerName} />
+            <Field label="Owner email" value={row.ownerEmail} />
             <Field label="Business name" value={row.businessName} />
+            <Field label="Description" value={row.description} />
+            <Field label="Website" value={row.website} />
             <Field label="Contact" value={row.contact ?? row.phone} />
             <Field label="Phone" value={row.phone} />
             <Field label="Location" value={row.location} />
             <Field label="Address" value={row.address} />
             <Field label="Office address" value={row.officeAddress} />
-            <Field label="City" value={row.city} />
+            <Field label="City / state" value={row.city} />
             <Field label="Zip code" value={row.zipCode} />
             <Field label="Created at" value={row.createdAt} />
           </div>

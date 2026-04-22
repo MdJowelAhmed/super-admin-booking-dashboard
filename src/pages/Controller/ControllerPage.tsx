@@ -1,37 +1,67 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useUrlNumber } from '@/hooks/useUrlState'
-import { mockControllers, type ControllerAccount } from './controllerData'
+import { mapBusinessRequestToAccount } from './controllerData'
+import type { ControllerAccount } from './controllerData'
 import { ControllerTable } from './components/ControllerTable'
 import { ControllerDetailsModal } from './components/ControllerDetailsModal'
-import { AddControllerModal } from './components/AddControllerModal'
 import { toast } from '@/utils/toast'
+import {
+  useGetBusinessRequestsQuery,
+  useUpdateBusinessRequestStatusMutation,
+  type ApiBusinessRoleType,
+} from '@/redux/api/controllerApi'
+
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
+}
 
 export default function ControllerPage() {
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
 
-  const [rows, setRows] = useState<ControllerAccount[]>(mockControllers)
   const [tab, setTab] = useState<'host' | 'business'>('host')
   const [detailsTarget, setDetailsTarget] = useState<ControllerAccount | null>(null)
   const [acceptTarget, setAcceptTarget] = useState<ControllerAccount | null>(null)
   const [rejectTarget, setRejectTarget] = useState<ControllerAccount | null>(null)
-  const [addOpen, setAddOpen] = useState(false)
 
-  const filteredRows = useMemo(() => rows.filter((r) => r.role === tab), [rows, tab])
-  const totalItems = filteredRows.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / limit))
+  const roleType: ApiBusinessRoleType = tab === 'host' ? 'HOST' : 'SERVICE'
 
-  const pageItems = useMemo(() => {
-    const start = (page - 1) * limit
-    return filteredRows.slice(start, start + limit)
-  }, [filteredRows, page, limit])
+  const { data, isLoading, isFetching, isError, error } = useGetBusinessRequestsQuery({
+    page,
+    limit,
+    roleType,
+  })
+
+  const [updateStatus, { isLoading: isUpdating }] =
+    useUpdateBusinessRequestStatusMutation()
+
+  const rows = useMemo(
+    () => (data?.data ?? []).map(mapBusinessRequestToAccount),
+    [data?.data]
+  )
+
+  const meta = data?.meta
+  const totalItems = meta?.total ?? 0
+  const totalPages = Math.max(1, meta?.totalPage ?? 1)
+
+  const listBusy = isLoading || isFetching
 
   const requestAccept = (row: ControllerAccount) => {
     if (row.status !== 'pending') return
@@ -43,45 +73,40 @@ export default function ControllerPage() {
     setRejectTarget(row)
   }
 
-  const confirmAccept = () => {
+  const confirmAccept = async () => {
     if (!acceptTarget) return
-    setRows((prev) =>
-      prev.map((r) => (r.id === acceptTarget.id ? { ...r, status: 'accepted' } : r))
-    )
-    toast({ variant: 'success', title: 'Accepted' })
-    setAcceptTarget(null)
+    try {
+      await updateStatus({
+        id: acceptTarget.id,
+        body: { status: 'approved' },
+      }).unwrap()
+      toast({ variant: 'success', title: 'Approved' })
+      setAcceptTarget(null)
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not approve',
+        description: getErrorMessage(err),
+      })
+    }
   }
 
-  const confirmReject = () => {
+  const confirmReject = async () => {
     if (!rejectTarget) return
-    setRows((prev) =>
-      prev.map((r) => (r.id === rejectTarget.id ? { ...r, status: 'rejected' } : r))
-    )
-    toast({ variant: 'success', title: 'Rejected' })
-    setRejectTarget(null)
-  }
-
-  const handleAddController = (payload: {
-    name: string
-    email: string
-    phone: string
-    password: string
-    role: ControllerAccount['role']
-  }) => {
-    setRows((prev) => [
-      {
-        id: crypto.randomUUID(),
-        name: payload.name,
-        email: payload.email,
-        phone: payload.phone,
-        password: payload.password,
-        role: payload.role,
-        status: 'accepted',
-        createdAt: new Date().toISOString(),
-        contact: payload.phone,
-      },
-      ...prev,
-    ])
+    try {
+      await updateStatus({
+        id: rejectTarget.id,
+        body: { status: 'rejected' },
+      }).unwrap()
+      toast({ variant: 'success', title: 'Rejected' })
+      setRejectTarget(null)
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not reject',
+        description: getErrorMessage(err),
+      })
+    }
   }
 
   return (
@@ -92,13 +117,29 @@ export default function ControllerPage() {
       className="space-y-6"
     >
       <div className="rounded-2xl border-0 bg-white shadow-sm">
-      
+        <div className="flex flex-col gap-2 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
+              Business requests
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground md:text-base">
+              Review host and service (business) applications. Approve or reject pending
+              requests.
+            </p>
+            {isError && (
+              <p className="mt-2 text-sm text-destructive">{getErrorMessage(error)}</p>
+            )}
+          </div>
+        </div>
 
         <CardContent className="p-0">
-          <Tabs value={tab} onValueChange={(v) => {
-            setTab(v as 'host' | 'business')
-            setPage(1)
-          }}>
+          <Tabs
+            value={tab}
+            onValueChange={(v) => {
+              setTab(v as 'host' | 'business')
+              setPage(1)
+            }}
+          >
             <div className="px-6 pt-4">
               <TabsList>
                 <TabsTrigger value="host">Host</TabsTrigger>
@@ -108,19 +149,21 @@ export default function ControllerPage() {
 
             <TabsContent value="host" className="mt-0">
               <ControllerTable
-                rows={pageItems}
+                rows={rows}
                 onDetails={setDetailsTarget}
                 onAccept={requestAccept}
                 onReject={requestReject}
+                isLoading={listBusy}
               />
             </TabsContent>
 
             <TabsContent value="business" className="mt-0">
               <ControllerTable
-                rows={pageItems}
+                rows={rows}
                 onDetails={setDetailsTarget}
                 onAccept={requestAccept}
                 onReject={requestReject}
+                isLoading={listBusy}
               />
             </TabsContent>
           </Tabs>
@@ -144,20 +187,22 @@ export default function ControllerPage() {
         open={!!acceptTarget}
         onClose={() => setAcceptTarget(null)}
         onConfirm={confirmAccept}
-        title="Accept account?"
+        title="Approve request?"
         description={
           acceptTarget
-            ? `Accept ${acceptTarget.name} (${acceptTarget.email})?`
+            ? `Approve ${acceptTarget.name} (${acceptTarget.email})?`
             : ''
         }
-        confirmText="Accept"
+        confirmText="Approve"
+        variant="info"
+        isLoading={isUpdating}
       />
 
       <ConfirmDialog
         open={!!rejectTarget}
         onClose={() => setRejectTarget(null)}
         onConfirm={confirmReject}
-        title="Reject account?"
+        title="Reject request?"
         description={
           rejectTarget
             ? `Reject ${rejectTarget.name} (${rejectTarget.email})?`
@@ -165,6 +210,7 @@ export default function ControllerPage() {
         }
         confirmText="Reject"
         variant="danger"
+        isLoading={isUpdating}
       />
 
       <ControllerDetailsModal
@@ -173,13 +219,6 @@ export default function ControllerPage() {
         row={detailsTarget}
         onAccept={requestAccept}
         onReject={requestReject}
-      />
-
-      <AddControllerModal
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        defaultRole={tab}
-        onSave={handleAddController}
       />
     </motion.div>
   )

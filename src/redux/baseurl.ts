@@ -39,6 +39,7 @@ export const baseApi = createApi({
         'Location',
         'ServiceLocation',
         'AppSlider',
+        'Controller',
     ],
     endpoints: () => ({}),
 })
