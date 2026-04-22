@@ -1,9 +1,23 @@
-import  { useState } from 'react'
 import { ConfirmDialog } from '@/components/common'
-import { useAppDispatch } from '@/redux/hooks'
-import { deleteCategory } from '@/redux/slices/categorySlice'
+import { useDeleteCategoryMutation } from '@/redux/api/categoryApi'
 import type { Category } from '@/types'
 import { toast } from '@/utils/toast'
+
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong'
+}
 
 interface DeleteCategoryModalProps {
   open: boolean
@@ -11,26 +25,28 @@ interface DeleteCategoryModalProps {
   category: Category
 }
 
-export function DeleteCategoryModal({ open, onClose, category }: DeleteCategoryModalProps) {
-  const dispatch = useAppDispatch()
-  const [isDeleting, setIsDeleting] = useState(false)
+export function DeleteCategoryModal({
+  open,
+  onClose,
+  category,
+}: DeleteCategoryModalProps) {
+  const [deleteCategory, { isLoading }] = useDeleteCategoryMutation()
 
   const handleDelete = async () => {
-    setIsDeleting(true)
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    dispatch(deleteCategory(category.id))
-    
-    toast({
-      title: 'Category Deleted',
-      description: `${category.name} has been deleted successfully.`,
-      variant: 'destructive',
-    })
-    
-    setIsDeleting(false)
-    onClose()
+    try {
+      await deleteCategory(category.id).unwrap()
+      toast({
+        title: 'Deleted',
+        description: `"${category.name}" has been removed.`,
+      })
+      onClose()
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not delete',
+        description: getErrorMessage(err),
+      })
+    }
   }
 
   return (
@@ -38,23 +54,11 @@ export function DeleteCategoryModal({ open, onClose, category }: DeleteCategoryM
       open={open}
       onClose={onClose}
       onConfirm={handleDelete}
-      title="Delete Category"
-      description={`Are you sure you want to delete "${category.name}"? This will affect ${category.productCount} products. This action cannot be undone.`}
-      confirmText="Delete Category"
+      title="Delete category"
+      description={`Are you sure you want to delete "${category.name}" (${category.type})? This cannot be undone.`}
+      confirmText="Delete"
       variant="danger"
-      isLoading={isDeleting}
+      isLoading={isLoading}
     />
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-

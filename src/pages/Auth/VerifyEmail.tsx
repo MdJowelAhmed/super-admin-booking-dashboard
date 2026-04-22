@@ -4,10 +4,11 @@ import { ArrowLeft, ArrowRight, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAppSelector } from '@/redux/hooks'
+import { useResentOtpMutation, useVerifyEmailMutation } from '@/redux/api/authApi'
 import { cn } from '@/utils/cn'
 import { motion } from 'framer-motion'
 
-const OTP_LENGTH = 6
+const OTP_LENGTH = 4
 
 export default function VerifyEmail() {
   const navigate = useNavigate()
@@ -15,10 +16,11 @@ export default function VerifyEmail() {
   const { passwordResetEmail, verificationEmail } = useAppSelector((state) => state.auth)
   
   const isPasswordReset = location.state?.type === 'reset'
-  const email = isPasswordReset ? passwordResetEmail : verificationEmail
+  const email = (isPasswordReset ? passwordResetEmail : verificationEmail) ?? ''
 
   const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(''))
-  const [isLoading, setIsLoading] = useState(false)
+  const [verifyEmail, { isLoading }] = useVerifyEmailMutation()
+  const [resentOtp] = useResentOtpMutation()
   const [error, setError] = useState('')
   const [resendTimer, setResendTimer] = useState(30)
   
@@ -74,38 +76,46 @@ export default function VerifyEmail() {
     e.preventDefault()
     const code = otp.join('')
 
+    if (!email) {
+      setError('Email is missing. Please go back and try again.')
+      return
+    }
+
     if (code.length !== OTP_LENGTH) {
       setError('Please enter the complete verification code')
       return
     }
 
-    setIsLoading(true)
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Mock verification - accept any 6-digit code
-      if (code === '123456' || code.length === 6) {
-        if (isPasswordReset) {
-          navigate('/auth/reset-password')
-        } else {
-          navigate('/auth/login', { state: { verified: true } })
-        }
-      } else {
+      const oneTimeCode = Number(code)
+      if (!Number.isFinite(oneTimeCode)) {
         setError('Invalid verification code')
+        return
+      }
+
+      await verifyEmail({ email, oneTimeCode }).unwrap()
+
+      if (isPasswordReset) {
+        navigate('/auth/reset-password')
+      } else {
+        navigate('/auth/login', { state: { verified: true } })
       }
     } catch {
       setError('An error occurred. Please try again.')
-    } finally {
-      setIsLoading(false)
     }
   }
 
   const handleResend = async () => {
+    if (!email) {
+      setError('Email is missing. Please go back and try again.')
+      return
+    }
     setResendTimer(30)
-    // Simulate resending code
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    try {
+      await resentOtp({ email }).unwrap()
+    } catch {
+      // ignore resend errors; timer still resets
+    }
   }
 
   return (
@@ -132,7 +142,7 @@ export default function VerifyEmail() {
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Verify your email</h1>
         <p className="text-muted-foreground">
-          We sent a 6-digit code to
+          We sent a 4-digit code to
         </p>
         <p className="font-medium">{email || 'your email'}</p>
       </div>
@@ -196,10 +206,7 @@ export default function VerifyEmail() {
         </p>
       </div>
 
-      <div className="p-4 rounded-lg bg-muted/50 border text-sm text-center">
-        <p className="text-muted-foreground">Demo: Enter any 6-digit code or use</p>
-        <p className="font-mono font-medium">123456</p>
-      </div>
+      {/* Demo hint removed for production flow */}
     </div>
   )
 }

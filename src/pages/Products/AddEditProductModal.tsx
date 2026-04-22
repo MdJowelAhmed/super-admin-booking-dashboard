@@ -1,11 +1,15 @@
-import  { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ModalWrapper, FormInput, FormSelect, FormTextarea, ImageUploader } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { useAppDispatch } from '@/redux/hooks'
 import { addProduct, updateProduct } from '@/redux/slices/productSlice'
+import {
+  mapCategoryFromApi,
+  useGetCategoriesQuery,
+} from '@/redux/api/categoryApi'
 import { PRODUCT_STATUSES } from '@/utils/constants'
 import { generateSKU } from '@/utils/formatters'
 import type { Product, ProductStatus } from '@/types'
@@ -32,7 +36,11 @@ interface AddEditProductModalProps {
 
 export function AddEditProductModal({ open, onClose, mode, product }: AddEditProductModalProps) {
   const dispatch = useAppDispatch()
-  const { list: categories } = useAppSelector((state) => state.categories)
+  const { data: categoriesRes } = useGetCategoriesQuery({ type: 'category' })
+  const categories = useMemo(
+    () => (categoriesRes?.data ?? []).map(mapCategoryFromApi),
+    [categoriesRes?.data]
+  )
   const [image, setImage] = useState<File | string | null>(product?.image || null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 

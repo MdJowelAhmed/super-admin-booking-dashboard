@@ -13,24 +13,25 @@ import { CategoryActionMenu } from './components/CategoryActionMenu'
 import { AddEditCategoryModal } from './AddEditCategoryModal'
 import { DeleteCategoryModal } from './DeleteCategoryModal'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { setFilters, setPage, setLimit, setSelectedCategory } from '@/redux/slices/categorySlice'
+import { setSelectedCategory } from '@/redux/slices/categorySlice'
 import { useUrlParams } from '@/hooks/useUrlState'
-import { CATEGORY_STATUSES } from '@/utils/constants'
-import { formatDate, formatNumber } from '@/utils/formatters'
-import type { Category, TableColumn } from '@/types'
+import { CATEGORY_TYPE_FILTER_OPTIONS } from '@/utils/constants'
+import { formatDate } from '@/utils/formatters'
+import type { Category, CategoryType, TableColumn } from '@/types'
 import { motion } from 'framer-motion'
+import {
+  mapCategoryFromApi,
+  useGetCategoriesQuery,
+} from '@/redux/api/categoryApi'
 
 export default function CategoryList() {
   const dispatch = useAppDispatch()
-  const { filteredList, isLoading, selectedCategory } = useAppSelector(
-    (state) => state.categories
-  )
+  const { selectedCategory } = useAppSelector((state) => state.categories)
 
-  // URL-based state management
   const { getParam, getNumberParam, setParam, setParams } = useUrlParams()
-  
+
   const search = getParam('search', '')
-  const status = getParam('status', 'all')
+  const typeFilter = getParam('type', 'all') as CategoryType | 'all'
   const page = getNumberParam('page', 1)
   const limit = getNumberParam('limit', 10)
 
@@ -38,107 +39,80 @@ export default function CategoryList() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
-  // Sync URL params with Redux
-  useEffect(() => {
-    dispatch(setFilters({ search, status: status as Category['status'] | 'all' }))
-  }, [search, status, dispatch])
+  const { data, isLoading, isFetching } = useGetCategoriesQuery(
+    typeFilter === 'all' ? undefined : { type: typeFilter }
+  )
+
+  const list = useMemo(
+    () => (data?.data ?? []).map(mapCategoryFromApi),
+    [data?.data]
+  )
+
+  const filteredList = useMemo(() => {
+    if (!search.trim()) return list
+    const q = search.toLowerCase()
+    return list.filter((c) => c.name.toLowerCase().includes(q))
+  }, [list, search])
 
   useEffect(() => {
-    dispatch(setPage(page))
-  }, [page, dispatch])
-
-  useEffect(() => {
-    dispatch(setLimit(limit))
-  }, [limit, dispatch])
+    if (page > 1 && filteredList.length === 0 && !isLoading) {
+      setParam('page', 1)
+    }
+  }, [page, filteredList.length, isLoading, setParam])
 
   const columns: TableColumn<Category>[] = useMemo(
     () => [
       {
-        key: 'category',
-        label: 'Category',
+        key: 'name',
+        label: 'Name',
         sortable: true,
         render: (_, category) => (
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-              {category.image ? (
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-            <div>
-              <p className="font-medium">{category.name}</p>
-              <p className="text-xs text-muted-foreground">/{category.slug}</p>
-            </div>
-          </div>
+          <p className="font-medium">{category.name}</p>
         ),
       },
       {
-        key: 'description',
-        label: 'Description',
-        render: (value) => (
-          <span className="text-muted-foreground line-clamp-2 max-w-xs">
-            {(value as string) || 'No description'}
-          </span>
-        ),
-      },
-      {
-        key: 'productCount',
-        label: 'Products',
+        key: 'type',
+        label: 'Type',
         sortable: true,
         render: (value) => (
-          <span className="font-medium">{formatNumber(value as number)}</span>
+          <StatusBadge status={value as string} />
         ),
-      },
-      {
-        key: 'status',
-        label: 'Status',
-        sortable: true,
-        render: (value) => <StatusBadge status={value as string} />,
       },
       {
         key: 'createdAt',
         label: 'Created',
         sortable: true,
         render: (value) => (
-          <span className="text-muted-foreground">{formatDate(value as string)}</span>
+          <span className="text-muted-foreground">
+            {formatDate(value as string)}
+          </span>
+        ),
+      },
+      {
+        key: 'updatedAt',
+        label: 'Updated',
+        sortable: true,
+        render: (value) => (
+          <span className="text-muted-foreground">
+            {formatDate(value as string)}
+          </span>
         ),
       },
     ],
     []
   )
 
-  // Calculate paginated data
   const paginatedData = useMemo(() => {
     const start = (page - 1) * limit
-    const end = start + limit
-    return filteredList.slice(start, end)
+    return filteredList.slice(start, start + limit)
   }, [filteredList, page, limit])
 
   const handleSearch = (value: string) => {
     setParams({ search: value, page: 1 })
   }
 
-  const handleStatusFilter = (value: string) => {
-    setParams({ status: value, page: 1 })
+  const handleTypeFilter = (value: string) => {
+    setParams({ type: value, page: 1 })
   }
 
   const handlePageChange = (newPage: number) => {
@@ -159,6 +133,8 @@ export default function CategoryList() {
     setShowDeleteModal(true)
   }
 
+  const tableBusy = isLoading || isFetching
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -171,7 +147,7 @@ export default function CategoryList() {
           <div>
             <CardTitle>Categories</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Organize your products with categories
+              Manage listing categories and amenities
             </p>
           </div>
           <Button onClick={() => setShowAddModal(true)}>
@@ -180,27 +156,25 @@ export default function CategoryList() {
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <SearchInput
               value={search}
               onChange={handleSearch}
-              placeholder="Search categories..."
+              placeholder="Search by name..."
               className="sm:w-80"
             />
             <FilterDropdown
-              value={status}
-              options={CATEGORY_STATUSES}
-              onChange={handleStatusFilter}
-              placeholder="All Status"
+              value={typeFilter}
+              options={CATEGORY_TYPE_FILTER_OPTIONS}
+              onChange={handleTypeFilter}
+              placeholder="Type"
             />
           </div>
 
-          {/* Table */}
           <DataTable
             columns={columns}
             data={paginatedData}
-            isLoading={isLoading}
+            isLoading={tableBusy}
             rowKeyExtractor={(row) => row.id}
             actions={(category) => (
               <CategoryActionMenu
@@ -209,13 +183,12 @@ export default function CategoryList() {
                 onDelete={() => handleDelete(category)}
               />
             )}
-            emptyMessage="No categories found. Try adjusting your filters."
+            emptyMessage="No categories found. Try adjusting filters or add a new one."
           />
 
-          {/* Pagination */}
           <Pagination
             currentPage={page}
-            totalPages={Math.ceil(filteredList.length / limit)}
+            totalPages={Math.max(1, Math.ceil(filteredList.length / limit))}
             totalItems={filteredList.length}
             itemsPerPage={limit}
             onPageChange={handlePageChange}
@@ -224,14 +197,12 @@ export default function CategoryList() {
         </CardContent>
       </Card>
 
-      {/* Add Category Modal */}
       <AddEditCategoryModal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
         mode="add"
       />
 
-      {/* Edit Category Modal */}
       {selectedCategory && (
         <AddEditCategoryModal
           open={showEditModal}
@@ -244,7 +215,6 @@ export default function CategoryList() {
         />
       )}
 
-      {/* Delete Category Modal */}
       {selectedCategory && (
         <DeleteCategoryModal
           open={showDeleteModal}

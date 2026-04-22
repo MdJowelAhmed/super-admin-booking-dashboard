@@ -15,6 +15,10 @@ import { DeleteProductModal } from './DeleteProductModal'
 import { ProductDetailsModal } from './ProductDetailsModal'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { setFilters, setPage, setLimit, setSelectedProduct } from '@/redux/slices/productSlice'
+import {
+  mapCategoryFromApi,
+  useGetCategoriesQuery,
+} from '@/redux/api/categoryApi'
 import { useUrlParams } from '@/hooks/useUrlState'
 import { PRODUCT_STATUSES } from '@/utils/constants'
 import { formatCurrency, formatDate } from '@/utils/formatters'
@@ -26,7 +30,11 @@ export default function ProductList() {
   const { filteredList, isLoading, selectedProduct } = useAppSelector(
     (state) => state.products
   )
-  const { list: categories } = useAppSelector((state) => state.categories)
+  const { data: categoriesRes } = useGetCategoriesQuery({ type: 'category' })
+  const categories = useMemo(
+    () => (categoriesRes?.data ?? []).map(mapCategoryFromApi),
+    [categoriesRes?.data]
+  )
 
   // URL-based state management
   const { getParam, getNumberParam, setParam, setParams } = useUrlParams()

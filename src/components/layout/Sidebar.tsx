@@ -10,13 +10,10 @@ import {
   Info,
   ListOrdered,
  
-  Star,
-  LifeBuoy,
   ImageIcon,
   Crown,
   Gamepad2,
   Package,
-  ListChecksIcon,
   LogOut,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
@@ -44,6 +41,12 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+    allowedRoles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    title: 'Categories',
+    href: '/categories',
+    icon: ListOrdered,
     allowedRoles: [UserRole.SUPER_ADMIN],
   },
 

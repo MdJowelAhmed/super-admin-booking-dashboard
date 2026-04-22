@@ -30,6 +30,18 @@ export const CATEGORY_STATUSES: SelectOption[] = [
   { value: 'inactive', label: 'Inactive' },
 ]
 
+/** Filter categories/amenities list; `all` loads GET /categories with no type query */
+export const CATEGORY_TYPE_FILTER_OPTIONS: SelectOption[] = [
+  { value: 'all', label: 'All types' },
+  { value: 'category', label: 'Category' },
+  { value: 'amenities', label: 'Amenities' },
+]
+
+export const CATEGORY_TYPE_FORM_OPTIONS: SelectOption[] = [
+  { value: 'category', label: 'Category' },
+  { value: 'amenities', label: 'Amenities' },
+]
+
 export const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
 export const DEFAULT_PAGINATION = {

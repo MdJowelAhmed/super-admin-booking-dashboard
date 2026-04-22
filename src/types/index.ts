@@ -65,32 +65,25 @@ export interface ProductFormData {
 }
 
 // ==================== Category Types ====================
+/** Backend category kind: listing categories vs amenities */
+export type CategoryType = 'category' | 'amenities'
+
 export interface Category {
   id: string
   name: string
-  slug: string
-  description?: string
-  image?: string
-  parentId?: string | null
-  status: CategoryStatus
-  productCount: number
+  type: CategoryType
   createdAt: string
   updatedAt: string
 }
 
-export type CategoryStatus = 'active' | 'inactive'
-
 export interface CategoryFilters {
   search: string
-  status: CategoryStatus | 'all'
+  type: CategoryType | 'all'
 }
 
 export interface CategoryFormData {
   name: string
-  description?: string
-  parentId?: string | null
-  status: CategoryStatus
-  image?: File | string
+  type: CategoryType
 }
 
 // ==================== Car Types ====================

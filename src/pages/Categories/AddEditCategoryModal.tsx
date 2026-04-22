@@ -1,23 +1,39 @@
-import  { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ModalWrapper, FormInput, FormTextarea, ImageUploader } from '@/components/common'
+import { ModalWrapper, FormInput, FormSelect } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { useAppDispatch } from '@/redux/hooks'
-import { addCategory, updateCategory } from '@/redux/slices/categorySlice'
-import { slugify } from '@/utils/formatters'
-import type { Category } from '@/types'
+import {
+  useAddCategoryMutation,
+  useUpdateCategoryMutation,
+} from '@/redux/api/categoryApi'
+import type { Category, CategoryType } from '@/types'
 import { toast } from '@/utils/toast'
+import { CATEGORY_TYPE_FORM_OPTIONS } from '@/utils/constants'
 
 const categorySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  slug: z.string().min(2, 'Slug must be at least 2 characters'),
-  description: z.string().optional(),
-  status: z.enum(['active', 'inactive']),
+  type: z.enum(['category', 'amenities']),
 })
 
-type CategoryFormData = z.infer<typeof categorySchema>
+type CategoryFormValues = z.infer<typeof categorySchema>
+
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong'
+}
 
 interface AddEditCategoryModalProps {
   open: boolean
@@ -26,12 +42,14 @@ interface AddEditCategoryModalProps {
   category?: Category
 }
 
-export function AddEditCategoryModal({ open, onClose, mode, category }: AddEditCategoryModalProps) {
-  const dispatch = useAppDispatch()
-  const [image, setImage] = useState<File | string | null>(category?.image || null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
- 
+export function AddEditCategoryModal({
+  open,
+  onClose,
+  mode,
+  category,
+}: AddEditCategoryModalProps) {
+  const [addCategory, { isLoading: isAdding }] = useAddCategoryMutation()
+  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation()
 
   const {
     register,
@@ -40,158 +58,102 @@ export function AddEditCategoryModal({ open, onClose, mode, category }: AddEditC
     watch,
     reset,
     formState: { errors },
-  } = useForm<CategoryFormData>({
+  } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: '',
-      slug: '',
-      description: '',
-      status: 'active',
+      type: 'category',
     },
   })
 
-  // Reset form when category changes or modal opens
   useEffect(() => {
-    if (open) {
-      if (mode === 'edit' && category) {
-        reset({
-          name: category.name,
-          slug: category.slug,
-          description: category.description || '',
-          status: category.status,
-        })
-        setImage(category.image || null)
-      } else {
-        reset({
-          name: '',
-          slug: '',
-          description: '',
-          status: 'active',
-        })
-        setImage(null)
-      }
+    if (!open) return
+    if (mode === 'edit' && category) {
+      reset({
+        name: category.name,
+        type: category.type,
+      })
+    } else {
+      reset({
+        name: '',
+        type: 'category',
+      })
     }
   }, [open, mode, category, reset])
 
-  // Auto-generate slug from name
-  const watchedName = watch('name')
-  useEffect(() => {
-    if (mode === 'add' && watchedName) {
-      setValue('slug', slugify(watchedName))
+  const onSubmit = async (data: CategoryFormValues) => {
+    const body = {
+      name: data.name.trim(),
+      type: data.type as CategoryType,
     }
-  }, [watchedName, mode, setValue])
-
-  const onSubmit = async (data: CategoryFormData) => {
-    setIsSubmitting(true)
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    const categoryData: Category = {
-      id: mode === 'edit' && category ? category.id : Date.now().toString(),
-      ...data,
-      description: data.description || undefined,
-      image: typeof image === 'string' ? image : image ? URL.createObjectURL(image) : undefined,
-      productCount: mode === 'edit' && category ? category.productCount : 0,
-      createdAt: mode === 'edit' && category ? category.createdAt : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    if (mode === 'edit') {
-      dispatch(updateCategory(categoryData))
+    try {
+      if (mode === 'edit' && category) {
+        await updateCategory({ id: category.id, ...body }).unwrap()
+        toast({
+          title: 'Category updated',
+          description: `${body.name} has been updated.`,
+        })
+      } else {
+        await addCategory(body).unwrap()
+        toast({
+          title: 'Category created',
+          description: `${body.name} has been created.`,
+        })
+      }
+      onClose()
+    } catch (err) {
       toast({
-        title: 'Category Updated',
-        description: `${data.name} has been updated successfully.`,
-      })
-    } else {
-      dispatch(addCategory(categoryData))
-      toast({
-        title: 'Category Created',
-        description: `${data.name} has been created successfully.`,
+        variant: 'destructive',
+        title: mode === 'edit' ? 'Could not update' : 'Could not create',
+        description: getErrorMessage(err),
       })
     }
-
-    setIsSubmitting(false)
-    onClose()
   }
+
+  const busy = isAdding || isUpdating
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={mode === 'add' ? 'Add New Category' : 'Edit Category'}
+      title={mode === 'add' ? 'Add category / amenity' : 'Edit category / amenity'}
       description={
         mode === 'add'
-          ? 'Create a new category to organize your products'
-          : 'Update the category information'
+          ? 'Send name and type as required by the API'
+          : 'Update name and type'
       }
-      size="xl"
+      size="md"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <FormInput
-          label="Category Name"
-          placeholder="Enter category name"
+          label="Name"
+          placeholder="e.g. WiFi"
           error={errors.name?.message}
           required
           {...register('name')}
         />
 
-        <FormInput
-          label="Slug"
-          placeholder="category-slug"
-          error={errors.slug?.message}
-          helperText="URL-friendly version of the name"
-          required
-          {...register('slug')}
-        />
-
-        <FormTextarea
-          label="Description"
-          placeholder="Enter category description (optional)"
-          error={errors.description?.message}
-          rows={3}
-          {...register('description')}
-        />
-{/* 
         <FormSelect
-          label="Status"
-          value={watch('status')}
-          options={statusOptions}
-          onChange={(value) => setValue('status', value as CategoryStatus)}
-          placeholder="Select status"
-          error={errors.status?.message}
+          label="Type"
+          value={watch('type')}
+          options={CATEGORY_TYPE_FORM_OPTIONS}
+          onChange={(value) =>
+            setValue('type', value as CategoryType, { shouldValidate: true })
+          }
+          placeholder="Select type"
+          error={errors.type?.message}
           required
-        /> */}
-
-        <div>
-          <label className="text-sm font-medium mb-2 block">Category Image</label>
-          <ImageUploader
-            value={image}
-            onChange={setImage}
-          />
-        </div>
+        />
 
         <div className="flex justify-end gap-3 pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
-          <Button type="submit" isLoading={isSubmitting}>
-            {mode === 'add' ? 'Create Category' : 'Save Changes'}
+          <Button type="submit" isLoading={busy}>
+            {mode === 'add' ? 'Create' : 'Save changes'}
           </Button>
         </div>
       </form>
     </ModalWrapper>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-

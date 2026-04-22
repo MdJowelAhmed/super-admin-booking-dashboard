@@ -34,8 +34,9 @@ interface VerifyEmailPayload {
 interface VerifyEmailResponse {
     success: boolean;
     message: string;
-    // Backend returns the reset token in the "data" field
-    data: string;
+    data: {
+        verifyToken: string;
+    };
 }
 
 interface ResetPasswordPayload {
@@ -138,18 +139,19 @@ const authApi = baseApi.injectEndpoints({
         }),
         verifyEmail: builder.mutation<VerifyEmailResponse, VerifyEmailPayload>({
             query: (credentials) => ({
-                url: '/auth/verify-email',
+                url: '/auth/verify-otp',
                 method: 'POST',
                 body: credentials,
             }),
             async onQueryStarted(_arg, { queryFulfilled }) {
                 try {
                     const { data } = await queryFulfilled;
-                    // Safely store the reset token from response.data into localStorage
-                    if (data?.data) {
+                    const token = data?.data?.verifyToken;
+                    // Safely store verifyToken into localStorage for reset-password
+                    if (token) {
                         try {
                             if (typeof localStorage !== 'undefined') {
-                                localStorage.setItem('resetPasswordToken', data.data);
+                                localStorage.setItem('verifyToken', token);
                             }
                         } catch {
                             // ignore storage errors
@@ -163,20 +165,22 @@ const authApi = baseApi.injectEndpoints({
         }),
         resetPassword: builder.mutation<ResetPasswordResponse, ResetPasswordPayload>({
             query: (credentials) => {
-                // Read the reset token that was returned from verify-email
-                let resetToken: string | null = null;
+                // Read verifyToken that was returned from verify-email
+                let verifyToken: string | null = null;
                 try {
-                    resetToken = typeof localStorage !== 'undefined'
-                        ? localStorage.getItem('resetPasswordToken')
+                    verifyToken = typeof localStorage !== 'undefined'
+                        ? localStorage.getItem('verifyToken')
                         : null;
                 } catch {
-                    resetToken = null;
+                    verifyToken = null;
                 }
 
                 const headers: Record<string, string> = {};
-                if (resetToken) {
-                    // Backend expects this token in the Authorization header
-                    headers.Authorization = resetToken;
+                if (verifyToken) {
+                    // Backend expects verifyToken in headers during reset
+                    // Send both forms for compatibility.
+                    headers.Token = verifyToken;
+                    headers.Authorization = `Bearer ${verifyToken}`;
                 }
 
                 return {

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAppDispatch } from '@/redux/hooks'
 import { setPasswordResetEmail } from '@/redux/slices/authSlice'
+import { useForgotPasswordMutation } from '@/redux/api/authApi'
 import { cn } from '@/utils/cn'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -21,9 +22,9 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 export default function ForgotPassword() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState('')
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation()
 
   const {
     register,
@@ -34,19 +35,14 @@ export default function ForgotPassword() {
   })
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    setIsLoading(true)
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await forgotPassword({ email: data.email }).unwrap()
 
       dispatch(setPasswordResetEmail(data.email))
       setSubmittedEmail(data.email)
       setIsSuccess(true)
     } catch {
       // Handle error
-    } finally {
-      setIsLoading(false)
     }
   }
 
