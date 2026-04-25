@@ -1,17 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { CardContent } from '@/components/ui/card'
 import { Pagination } from '@/components/common/Pagination'
-import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useUrlNumber } from '@/hooks/useUrlState'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
-import {
-  mockSubscriptions,
-  type SubscriptionRow,
-} from './subscriptionData'
+import type { SubscriptionRow } from './subscriptionData'
 import { SubscriptionTable } from './components/SubscriptionTable'
-import { toast } from '@/utils/toast'
+import { useGetSubscriptionUsersQuery } from '@/redux/api/subscriptionUserApi'
 
 // (purchase flow helpers removed — super-admin only)
 
@@ -23,31 +19,46 @@ export default function Subscription() {
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
 
-  const [rows, setRows] = useState<SubscriptionRow[]>(mockSubscriptions)
-  const [cancelTarget, setCancelTarget] = useState<SubscriptionRow | null>(null)
+  const { data, isLoading } = useGetSubscriptionUsersQuery(
+    { page, limit },
+    { skip: !isSuperAdmin }
+  )
 
-  const tableRows = isSuperAdmin ? rows : []
+  const tableRows: SubscriptionRow[] = useMemo(() => {
+    if (!isSuperAdmin) return []
+    const docs = data?.data?.data ?? []
 
-  const totalItems = tableRows.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / limit))
+    return docs.map((doc, idx) => {
+      const statusRaw = String(doc.status ?? '').toLowerCase()
+      const status: SubscriptionRow['status'] =
+        statusRaw === 'active' ? 'active' : 'expired'
 
-  const pageItems = useMemo(() => {
-    const start = (page - 1) * limit
-    return tableRows.slice(start, start + limit)
-  }, [tableRows, page, limit])
+      const userRole = String(doc.userId?.role ?? '').toUpperCase()
+      const accountType: SubscriptionRow['accountType'] =
+        userRole === 'HOST' ? 'host' : 'business'
+
+      return {
+        id: doc._id,
+        displaySerial: `#${(page - 1) * limit + idx + 1}`,
+        packageName: doc.package?.title ?? '—',
+        purchasedAt: doc.currentPeriodStart ?? doc.createdAt,
+        endsAt: doc.currentPeriodEnd ?? doc.updatedAt ?? doc.createdAt,
+        price: Number(doc.price ?? 0),
+        currency: 'USD',
+        status,
+        userName: doc.userId?.name ?? '—',
+        userEmail: doc.userId?.email ?? '—',
+        accountType,
+      }
+    })
+  }, [data, isSuperAdmin, limit, page])
+
+  const totalItems = isSuperAdmin ? (data?.data?.meta?.total ?? 0) : 0
+  const totalPages = isSuperAdmin ? (data?.data?.meta?.totalPages ?? 1) : 1
+
+  const pageItems = tableRows
 
   // (buy flow removed — super-admin only)
-
-  const confirmCancelSubscription = () => {
-    if (!cancelTarget) return
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === cancelTarget.id ? { ...r, status: 'expired' as const } : r
-      )
-    )
-    toast({ variant: 'success', title: 'Subscription cancelled' })
-    setCancelTarget(null)
-  }
 
   return (
     <motion.div
@@ -69,7 +80,7 @@ export default function Subscription() {
         </div>
 
         <CardContent className="p-0">
-          <SubscriptionTable mode="admin" rows={pageItems} />
+          <SubscriptionTable mode="admin" rows={isLoading ? [] : pageItems} />
           <div className="border-t border-gray-100 px-6 py-4">
             <Pagination
               currentPage={Math.min(page, totalPages)}
@@ -85,19 +96,6 @@ export default function Subscription() {
           </div>
         </CardContent>
       </div>
-
-      <ConfirmDialog
-        open={!!cancelTarget}
-        onClose={() => setCancelTarget(null)}
-        onConfirm={confirmCancelSubscription}
-        title="Cancel subscription?"
-        description={
-          cancelTarget
-            ? `Cancel “${cancelTarget.packageName}”? Your access will end after the current period (shown as expired in this demo).`
-            : ''
-        }
-        confirmText="Cancel subscription"
-      />
     </motion.div>
   )
 }
