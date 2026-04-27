@@ -17,10 +17,11 @@ import {
     Legend,
 } from 'recharts'
 import { motion } from 'framer-motion'
-import { years, type SuperAdminPlatformChartPoint } from './dashboardData'
+import type { SuperAdminPlatformChartPoint } from './dashboardData'
 
 interface SuperAdminPlatformChartProps {
     chartData: SuperAdminPlatformChartPoint[]
+    yearOptions: string[]
     selectedYear: string
     onYearChange: (year: string) => void
 }
@@ -102,6 +103,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function SuperAdminPlatformChart({
     chartData,
+    yearOptions,
     selectedYear,
     onYearChange,
 }: SuperAdminPlatformChartProps) {
@@ -129,7 +131,7 @@ export function SuperAdminPlatformChart({
                                 <SelectValue placeholder="Year" />
                             </SelectTrigger>
                             <SelectContent>
-                                {years.map((year) => (
+                                {yearOptions.map((year) => (
                                     <SelectItem key={year} value={year}>
                                         {year}
                                     </SelectItem>
