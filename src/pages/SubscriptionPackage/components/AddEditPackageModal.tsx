@@ -15,12 +15,23 @@ const PAYMENT_TYPE_OPTIONS = [
   { value: 'Yearly', label: 'Yearly' },
 ] as const
 
+const DURATION_OPTIONS = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: '3 months', label: '3 months' },
+  { value: '6 months', label: '6 months' },
+  { value: '1 year', label: '1 year' },
+] as const
+
+type DurationValue = (typeof DURATION_OPTIONS)[number]['value']
+
 const schema = z
   .object({
     title: z.string().min(1, 'Title is required'),
     description: z.string().min(1, 'Description is required'),
     price: z.coerce.number().positive('Price must be greater than 0'),
-    duration: z.string().min(1, 'Duration is required'),
+    duration: z.enum(['monthly', '3 months', '6 months', '1 year'], {
+      required_error: 'Duration is required',
+    }),
     paymentType: z.enum(['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'], {
       required_error: 'Payment type is required',
     }),
@@ -67,7 +78,7 @@ const defaults: FormValues = {
   title: '',
   description: '',
   price: 49.99,
-  duration: '1 month',
+  duration: 'monthly',
   paymentType: 'Monthly',
   p0On: true,
   p1On: false,
@@ -94,6 +105,7 @@ export function AddEditPackageModal({
   })
 
   const paymentType = watch('paymentType')
+  const duration = watch('duration')
 
   useEffect(() => {
     if (!open) return
@@ -101,11 +113,24 @@ export function AddEditPackageModal({
       const has3 = pkg.features?.some((f) => String(f.description).includes('1-3')) ?? false
       const has6 = pkg.features?.some((f) => String(f.description).includes('4-6')) ?? false
       const has7 = pkg.features?.some((f) => String(f.description).includes('7 plus')) ?? false
+
+      const dur = String(pkg.duration ?? '').toLowerCase()
+      const normalizedDuration: DurationValue =
+        dur === 'monthly' || dur === '1 month'
+          ? 'monthly'
+          : dur === '3 months' || dur === '3 month'
+            ? '3 months'
+            : dur === '6 months' || dur === '6 month'
+              ? '6 months'
+              : dur === '1 year' || dur === 'yearly' || dur === '12 months'
+                ? '1 year'
+                : defaults.duration
+
       reset({
         title: pkg.title,
         description: pkg.description,
         price: pkg.price,
-        duration: pkg.duration,
+        duration: normalizedDuration,
         paymentType: (pkg.paymentType as PaymentType) ?? 'Monthly',
         p0On: has3 || (!has3 && !has6 && !has7),
         p1On: has6,
@@ -189,11 +214,14 @@ export function AddEditPackageModal({
             {...register('price')}
             error={errors.price?.message}
           />
-          <FormInput
+          <FormSelect
             label="Duration"
-            placeholder="1 month"
+            name="duration"
+            value={duration}
+            options={[...DURATION_OPTIONS]}
+            onChange={(v) => setValue('duration', v as DurationValue, { shouldValidate: true })}
+            placeholder="Select duration"
             required
-            {...register('duration')}
             error={errors.duration?.message}
           />
         </div>
@@ -211,9 +239,7 @@ export function AddEditPackageModal({
 
         <div className="pt-2">
           <p className="text-sm font-medium text-slate-800">Features</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Select feature tiers. Limit auto সেট হবে (3, 6, Unlimited).
-          </p>
+         
           {errors.p0On?.message ? (
             <p className="text-xs text-destructive mt-1">{errors.p0On.message}</p>
           ) : null}
