@@ -14,22 +14,6 @@ import {
   useUpdateUserStatusMutation,
 } from '@/redux/api/userApi'
 
-function getErrorMessage(err: unknown): string {
-  if (
-    err &&
-    typeof err === 'object' &&
-    'data' in err &&
-    err.data &&
-    typeof err.data === 'object' &&
-    'message' in err.data &&
-    typeof (err.data as { message: unknown }).message === 'string'
-  ) {
-    return (err.data as { message: string }).message
-  }
-  if (err instanceof Error) return err.message
-  return 'Failed to load users.'
-}
-
 export default function UserList() {
   const navigate = useNavigate()
   const { getParam, getNumberParam, setParam, setParams } = useUrlParams()
@@ -40,7 +24,7 @@ export default function UserList() {
   const page = getNumberParam('page', 1)
   const limit = getNumberParam('limit', 10)
 
-  const { data, isLoading, isFetching, isError, error } = useGetUsersQuery({
+  const { data, isLoading, isFetching } = useGetUsersQuery({
     page,
     limit,
     role: role === 'all' ? 'all' : role,

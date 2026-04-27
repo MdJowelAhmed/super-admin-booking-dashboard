@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/utils/cn'
 import type { Category } from '@/types'
-import { formatDate } from '@/utils/formatters'
 import { CategoryActionMenu } from './CategoryActionMenu'
 
 function CategoryTypePill({ type }: { type: Category['type'] }) {
