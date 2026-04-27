@@ -47,7 +47,10 @@ export default function UserList() {
   })
 
   const [updateStatus, { isLoading: isUpdating }] = useUpdateUserStatusMutation()
-  const [blockTarget, setBlockTarget] = useState<User | null>(null)
+  const [statusConfirm, setStatusConfirm] = useState<{
+    user: User
+    nextStatus: 'blocked' | 'active'
+  } | null>(null)
 
   const rows = useMemo(
     () => (data?.data ?? []).map(mapUserManagementDocToUser),
@@ -102,19 +105,23 @@ export default function UserList() {
 
   const handleToggleStatus = (user: User) => {
     if (user.status === 'blocked') {
-      updateStatus({ id: user.id, body: { status: 'active' } })
-        .unwrap()
-        .catch(() => null)
+      setStatusConfirm({ user, nextStatus: 'active' })
       return
     }
-    setBlockTarget(user)
+    setStatusConfirm({ user, nextStatus: 'blocked' })
   }
 
-  const confirmBlock = async () => {
-    if (!blockTarget) return
-    await updateStatus({ id: blockTarget.id, body: { status: 'blocked' } }).unwrap()
-    setBlockTarget(null)
+  const confirmStatusChange = async () => {
+    if (!statusConfirm) return
+    await updateStatus({
+      id: statusConfirm.user.id,
+      body: { status: statusConfirm.nextStatus },
+    }).unwrap()
+    setStatusConfirm(null)
   }
+
+  const displayNameForConfirm = (u: User) =>
+    u.rawName?.trim() || `${u.firstName} ${u.lastName}`.trim() || u.email
 
   const listBusy = isLoading || isFetching
 
@@ -176,17 +183,27 @@ export default function UserList() {
       </div>
 
       <ConfirmDialog
-        open={!!blockTarget}
-        onClose={() => setBlockTarget(null)}
-        onConfirm={confirmBlock}
-        title="Block user?"
+        open={!!statusConfirm}
+        onClose={() => setStatusConfirm(null)}
+        onConfirm={confirmStatusChange}
+        title={
+          statusConfirm?.nextStatus === 'blocked'
+            ? 'Block user?'
+            : 'Activate user?'
+        }
         description={
-          blockTarget
-            ? `Block ${blockTarget.rawName?.trim() || blockTarget.email}? They will no longer be able to access the platform.`
+          statusConfirm
+            ? statusConfirm.nextStatus === 'blocked'
+              ? `Block ${displayNameForConfirm(statusConfirm.user)}? They will no longer be able to access the platform.`
+              : `Activate ${displayNameForConfirm(statusConfirm.user)}? They will regain access to the platform.`
             : ''
         }
-        confirmText="Block"
-        variant="warning"
+        confirmText={
+          statusConfirm?.nextStatus === 'blocked' ? 'Block' : 'Activate'
+        }
+        variant={
+          statusConfirm?.nextStatus === 'blocked' ? 'warning' : 'info'
+        }
         isLoading={isUpdating}
       />
     </motion.div>

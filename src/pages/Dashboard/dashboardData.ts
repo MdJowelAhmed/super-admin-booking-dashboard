@@ -131,10 +131,10 @@ export const superAdminPlatformYearlyData: Record<string, SuperAdminPlatformChar
 
 /** Platform-wide totals for super admin stat cards (mock until API exists). */
 export const superAdminDashboardStats = {
-    totalUsers: 15_720,
-    totalHosts: 216,
-    totalBusinesses: 380,
-    totalRevenue: 2_458_920,
+    totalUsers: 4,
+    totalHosts: 1,
+    totalBusinesses: 1,
+    totalRevenue: 250,
     changeUsers: 8.2,
     changeHosts: 4.1,
     changeBusinesses: 6.5,

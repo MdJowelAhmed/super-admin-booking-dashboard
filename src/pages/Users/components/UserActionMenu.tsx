@@ -38,7 +38,9 @@ interface UserActionMenuProps {
 export function UserActionMenu({ user }: UserActionMenuProps) {
   const navigate = useNavigate()
   const [updateStatus, { isLoading }] = useUpdateUserStatusMutation()
-  const [showBlockDialog, setShowBlockDialog] = useState(false)
+  const [pendingDialog, setPendingDialog] = useState<'block' | 'activate' | null>(
+    null
+  )
 
   const displayName =
     user.rawName?.trim() ||
@@ -56,12 +58,13 @@ export function UserActionMenu({ user }: UserActionMenuProps) {
     })
   }
 
-  const handleActivate = async () => {
+  const handleActivateConfirm = async () => {
     try {
       await updateStatus({
         id: user.id,
         body: { status: 'active' },
       }).unwrap()
+      setPendingDialog(null)
       toast({
         title: 'User activated',
         description: `${displayName} is now active.`,
@@ -81,7 +84,7 @@ export function UserActionMenu({ user }: UserActionMenuProps) {
         id: user.id,
         body: { status: 'blocked' },
       }).unwrap()
-      setShowBlockDialog(false)
+      setPendingDialog(null)
       toast({
         title: 'User blocked',
         description: `${displayName} has been blocked.`,
@@ -117,12 +120,12 @@ export function UserActionMenu({ user }: UserActionMenuProps) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {user.status === 'blocked' ? (
-            <DropdownMenuItem onClick={handleActivate}>
+            <DropdownMenuItem onClick={() => setPendingDialog('activate')}>
               <CheckCircle className="h-4 w-4 mr-2" />
               Activate User
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem onClick={() => setShowBlockDialog(true)}>
+            <DropdownMenuItem onClick={() => setPendingDialog('block')}>
               <Ban className="h-4 w-4 mr-2" />
               Block User
             </DropdownMenuItem>
@@ -131,13 +134,23 @@ export function UserActionMenu({ user }: UserActionMenuProps) {
       </DropdownMenu>
 
       <ConfirmDialog
-        open={showBlockDialog}
-        onClose={() => setShowBlockDialog(false)}
+        open={pendingDialog === 'block'}
+        onClose={() => setPendingDialog(null)}
         onConfirm={handleBlockConfirm}
         title="Block User"
         description={`Block ${displayName}? They will no longer be able to access the platform.`}
         confirmText="Block User"
         variant="warning"
+        isLoading={isLoading}
+      />
+      <ConfirmDialog
+        open={pendingDialog === 'activate'}
+        onClose={() => setPendingDialog(null)}
+        onConfirm={handleActivateConfirm}
+        title="Activate User"
+        description={`Activate ${displayName}? They will regain access to the platform.`}
+        confirmText="Activate User"
+        variant="info"
         isLoading={isLoading}
       />
     </>
