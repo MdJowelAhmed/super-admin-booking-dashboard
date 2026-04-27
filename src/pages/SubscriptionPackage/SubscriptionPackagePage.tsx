@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
+import { Pagination } from '@/components/common/Pagination'
+import { useUrlNumber } from '@/hooks/useUrlState'
 import {
-  tierSeedToAdminPackages,
+  mapSubscriptionPackageFromApi,
   type AdminSubscriptionPackage,
 } from './subscriptionPackageData'
 import { SubscriptionPackageCard } from './components/SubscriptionPackageCard'
@@ -13,10 +14,28 @@ import {
   AddEditPackageModal,
   type SaveSubscriptionPackageInput,
 } from './components/AddEditPackageModal'
+import {
+  useAddSubscriptionPackageMutation,
+  useDeleteSubscriptionPackageMutation,
+  useGetSubscriptionPackagesQuery,
+  useUpdateSubscriptionPackageMutation,
+} from '@/redux/api/subscriptionPackage'
+import { toast } from '@/utils/toast'
 
 export default function SubscriptionPackagePage() {
-  const [packages, setPackages] = useState<AdminSubscriptionPackage[]>(tierSeedToAdminPackages)
-  const [listTab, setListTab] = useState<'host' | 'business'>('host')
+  const [page, setPage] = useUrlNumber('page', 1)
+  const [limit, setLimit] = useUrlNumber('limit', 10)
+
+  const { data, isFetching } = useGetSubscriptionPackagesQuery({ page, limit })
+  const [addPackage] = useAddSubscriptionPackageMutation()
+  const [updatePackage] = useUpdateSubscriptionPackageMutation()
+  const [deletePackage, { isLoading: isDeleting }] = useDeleteSubscriptionPackageMutation()
+
+  const packages = useMemo(
+    () => (data?.data ?? []).map(mapSubscriptionPackageFromApi),
+    [data?.data]
+  )
+
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [editing, setEditing] = useState<AdminSubscriptionPackage | null>(null)
@@ -34,39 +53,48 @@ export default function SubscriptionPackagePage() {
     setModalOpen(true)
   }
 
-  const handleSave = (payload: SaveSubscriptionPackageInput) => {
-    const next: AdminSubscriptionPackage = {
-      id: payload.id ?? crypto.randomUUID(),
-      name: payload.name,
-      price: payload.price,
-      billingLabel: payload.billingLabel,
-      mostPopular: payload.mostPopular,
-      packageType: payload.packageType,
-      propertyFeatureLabels: payload.propertyFeatureLabels,
-      propertyFeatures: payload.propertyFeatures,
-      serviceFeatureLabels: payload.serviceFeatureLabels,
-      serviceFeatures: payload.serviceFeatures,
-    }
-
-    setPackages((prev) => {
-      let list =
-        modalMode === 'create'
-          ? [next, ...prev]
-          : prev.map((p) => (p.id === next.id ? next : p))
-
-      if (next.mostPopular) {
-        list = list.map((p) => (p.id === next.id ? p : { ...p, mostPopular: false }))
+  const handleSave = async (payload: SaveSubscriptionPackageInput) => {
+    try {
+      if (modalMode === 'edit' && payload.id) {
+        await updatePackage({
+          id: payload.id,
+          title: payload.title,
+          description: payload.description,
+          price: payload.price,
+          duration: payload.duration,
+          paymentType: payload.paymentType,
+          features: payload.features,
+        }).unwrap()
+        toast({ variant: 'success', title: 'Package updated' })
+      } else {
+        await addPackage({
+          title: payload.title,
+          description: payload.description,
+          price: payload.price,
+          duration: payload.duration,
+          paymentType: payload.paymentType,
+          features: payload.features,
+        }).unwrap()
+        toast({ variant: 'success', title: 'Package created' })
       }
-
-      return list
-    })
+    } catch {
+      toast({ variant: 'destructive', title: 'Action failed' })
+    }
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return
-    setPackages((prev) => prev.filter((p) => p.id !== deleteTarget.id))
-    setDeleteTarget(null)
+    try {
+      await deletePackage(deleteTarget.id).unwrap()
+      toast({ variant: 'success', title: 'Package deleted' })
+      setDeleteTarget(null)
+    } catch {
+      toast({ variant: 'destructive', title: 'Delete failed' })
+    }
   }
+
+  const totalItems = data?.meta?.total ?? packages.length
+  const totalPages = Math.max(1, data?.meta?.totalPage ?? 1)
 
   return (
     <motion.div
@@ -94,68 +122,40 @@ export default function SubscriptionPackagePage() {
         </Button>
       </div>
 
-      <Tabs value={listTab} onValueChange={(v) => setListTab(v as 'host' | 'business')}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="host">Host</TabsTrigger>
-          <TabsTrigger value="business">Business</TabsTrigger>
-        </TabsList>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {packages.map((pkg, index) => (
+          <motion.div
+            key={pkg.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.06 * index }}
+          >
+            <SubscriptionPackageCard pkg={pkg} onEdit={openEdit} onDelete={setDeleteTarget} />
+          </motion.div>
+        ))}
+      </div>
 
-        <TabsContent value="host" className="mt-0">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {packages
-              .filter((p) => p.packageType === 'host')
-              .map((pkg, index) => (
-              <motion.div
-                key={pkg.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.06 * index }}
-              >
-                <SubscriptionPackageCard
-                  pkg={pkg}
-                  onEdit={openEdit}
-                  onDelete={setDeleteTarget}
-                />
-              </motion.div>
-            ))}
-          </div>
-          {packages.filter((p) => p.packageType === 'host').length === 0 && (
-            <p className="text-center text-muted-foreground py-12 border rounded-xl bg-white">
-              {packages.length === 0
-                ? 'No packages yet. Click "Add package" to create one.'
-                : 'No host packages yet. Switch to Business or add a host package.'}
-            </p>
-          )}
-        </TabsContent>
+      {packages.length === 0 && (
+        <p className="text-center text-muted-foreground py-12 border rounded-xl bg-white">
+          {isFetching
+            ? 'Loading packages…'
+            : 'No packages yet. Click "Add package" to create one.'}
+        </p>
+      )}
 
-        <TabsContent value="business" className="mt-0">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {packages
-              .filter((p) => p.packageType === 'business')
-              .map((pkg, index) => (
-              <motion.div
-                key={pkg.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.06 * index }}
-              >
-                <SubscriptionPackageCard
-                  pkg={pkg}
-                  onEdit={openEdit}
-                  onDelete={setDeleteTarget}
-                />
-              </motion.div>
-            ))}
-          </div>
-          {packages.filter((p) => p.packageType === 'business').length === 0 && (
-            <p className="text-center text-muted-foreground py-12 border rounded-xl bg-white">
-              {packages.length === 0
-                ? 'No packages yet. Click "Add package" to create one.'
-                : 'No business packages yet. Switch to Host or add a business package.'}
-            </p>
-          )}
-        </TabsContent>
-      </Tabs>
+      <div className="border-t border-gray-100 px-6 py-4 bg-white rounded-2xl shadow-sm">
+        <Pagination
+          currentPage={Math.min(page, totalPages)}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={limit}
+          onPageChange={setPage}
+          onItemsPerPageChange={(n) => {
+            setLimit(n)
+            setPage(1)
+          }}
+        />
+      </div>
 
       <AddEditPackageModal
         open={modalOpen}
@@ -166,7 +166,6 @@ export default function SubscriptionPackagePage() {
         mode={modalMode}
         pkg={editing}
         onSave={handleSave}
-        defaultTypeForCreate={listTab}
       />
 
       <ConfirmDialog
@@ -176,10 +175,11 @@ export default function SubscriptionPackagePage() {
         title="Delete package"
         description={
           deleteTarget
-            ? `Remove the “${deleteTarget.name}” package? Subscribers may still reference it until you update billing.`
+            ? `Remove the “${deleteTarget.title}” package? Subscribers may still reference it until you update billing.`
             : ''
         }
         confirmText="Delete"
+        isLoading={isDeleting}
       />
     </motion.div>
   )

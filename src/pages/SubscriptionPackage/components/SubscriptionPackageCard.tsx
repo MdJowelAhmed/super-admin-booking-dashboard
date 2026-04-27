@@ -1,4 +1,4 @@
-import { Check, X, Pencil, Trash2 } from 'lucide-react'
+import { Check, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
 import { formatCurrency } from '@/utils/formatters'
@@ -15,10 +15,6 @@ export function SubscriptionPackageCard({
   onEdit,
   onDelete,
 }: SubscriptionPackageCardProps) {
-  const isHostPkg = pkg.packageType === 'host'
-  const featureLabels = isHostPkg ? pkg.propertyFeatureLabels : pkg.serviceFeatureLabels
-  const features = isHostPkg ? pkg.propertyFeatures : pkg.serviceFeatures
-
   return (
     <div
       className={cn(
@@ -28,18 +24,13 @@ export function SubscriptionPackageCard({
     >
       <div className="flex flex-wrap items-center gap-2 min-h-[28px]">
         <span className="rounded-full bg-[#6BBF2D] px-3 py-1 text-xs font-semibold text-white">
-          {pkg.name}
+          {pkg.title}
         </span>
-        {/* <span
-          className={cn(
-            'rounded-full px-3 py-1 text-xs font-semibold',
-            isHostPkg ? 'bg-[#E7F6D5] text-[#2E6A0D]' : 'bg-[#E0F2FE] text-[#075985]'
-          )}
-        >
-          {isHostPkg ? 'Host' : 'Business'}
-        </span> */}
-        {pkg.mostPopular && (
-          <span className="text-xs font-semibold text-[#0C5822]">(Most Popular)</span>
+        <span className="text-xs font-medium text-muted-foreground">
+          {pkg.paymentType} · {pkg.duration}
+        </span>
+        {pkg.status && (
+          <span className="text-xs font-semibold text-[#0C5822]">({pkg.status})</span>
         )}
       </div>
 
@@ -47,20 +38,22 @@ export function SubscriptionPackageCard({
         <p className="text-3xl font-bold text-slate-900 tabular-nums">
           {formatCurrency(pkg.price, 'USD')}
         </p>
-        <p className="text-sm text-muted-foreground">{pkg.billingLabel}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2">{pkg.description}</p>
       </div>
 
       <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm text-slate-700">
-        {featureLabels.map((label, i) => {
-          const ok = features[i]
+        {(pkg.features ?? []).map((f, i) => {
           return (
             <li key={`${pkg.id}-${i}`} className="flex items-center gap-2">
-              {ok ? (
-                <Check className="h-4 w-4 shrink-0 text-[#6BBF2D]" strokeWidth={2.5} />
-              ) : (
-                <X className="h-4 w-4 shrink-0 text-slate-400" strokeWidth={2} />
-              )}
-              <span className={cn(!ok && 'text-slate-400')}>{label}</span>
+              <Check className="h-4 w-4 shrink-0 text-[#6BBF2D]" strokeWidth={2.5} />
+              <span>
+                {f.name ? <span className="font-medium">{f.name}: </span> : null}
+                {f.description}
+                <span className="text-muted-foreground">
+                  {' '}
+                  · {f.isUnlimited ? 'Unlimited' : `Limit ${f.limit ?? 0}`}
+                </span>
+              </span>
             </li>
           )
         })}

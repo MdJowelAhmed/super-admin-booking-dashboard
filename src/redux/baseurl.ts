@@ -19,6 +19,7 @@ export const baseApi = createApi({
         'Auth',
         'User',
         'Subscription',
+        'SubscriptionPackage',
         'Product',
         'Category',
         'Car',
