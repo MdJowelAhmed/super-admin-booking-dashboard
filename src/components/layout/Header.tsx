@@ -17,6 +17,8 @@ import { getInitials } from '@/utils/formatters'
 import { NotificationPreviewDialog } from '@/components/layout/NotificationPreviewDialog'
 import { useState } from 'react'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
+import { imageUrl } from '@/components/common/imageUrl'
+import { useGetMyProfileQuery } from '@/redux/api/authApi'
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -46,11 +48,18 @@ export function Header() {
   const dispatch = useAppDispatch()
   // const { theme } = useAppSelector((state) => state.ui)
   const { user } = useAppSelector((state) => state.auth)
+  const { data: myProfileData } = useGetMyProfileQuery()
   const location = useLocation()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const pageTitle = routeTitles[location.pathname] || 'Dashboard'
+  const profilePhotoPath =
+    myProfileData?.data?.image?.trim() || myProfileData?.data?.profileImage?.trim() || ''
+  const profilePhoto = profilePhotoPath ? imageUrl(profilePhotoPath) : user?.avatar
+  const displayName = myProfileData?.data?.name?.trim() || `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
+  const [displayFirstName, ...displayRestName] = displayName.split(' ').filter(Boolean)
+  const displayLastName = displayRestName.join(' ')
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
@@ -78,7 +87,7 @@ export function Header() {
           <div>
             <h1 className="text-xl font-semibold text-accent">{pageTitle}</h1>
             <p className="text-sm text-accent hidden sm:block">
-              Welcome back, {user?.firstName || 'Admin'}
+              Welcome back, {displayFirstName || user?.firstName || 'Admin'}
             </p>
           </div>
         </div>
@@ -118,9 +127,9 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={user?.avatar} />
+                  <AvatarImage src={profilePhoto} alt={displayName || 'User'} />
                   <AvatarFallback className="text-white bg-primary" >
-                    {getInitials(user?.firstName, user?.lastName)}
+                    {getInitials(displayFirstName || user?.firstName, displayLastName || user?.lastName)}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -129,7 +138,7 @@ export function Header() {
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium">
-                    {user ? `${user.firstName} ${user.lastName}` : 'Admin User'}
+                    {displayName || 'Admin User'}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {user?.email || 'admin@example.com'}
