@@ -107,6 +107,22 @@ export function AddEditPackageModal({
   const paymentType = watch('paymentType')
   const duration = watch('duration')
 
+  const applyFeatureSelection = (index: 0 | 1 | 2, checked: boolean) => {
+    const current = [watch('p0On'), watch('p1On'), watch('p2On')]
+    current[index] = checked
+
+    const highestSelected = current[2] ? 2 : current[1] ? 1 : current[0] ? 0 : -1
+    const normalized = [
+      highestSelected >= 0,
+      highestSelected >= 1,
+      highestSelected >= 2,
+    ] as const
+
+    setValue('p0On', normalized[0], { shouldValidate: true })
+    setValue('p1On', normalized[1], { shouldValidate: true })
+    setValue('p2On', normalized[2], { shouldValidate: true })
+  }
+
   useEffect(() => {
     if (!open) return
     if (mode === 'edit' && pkg) {
@@ -247,19 +263,34 @@ export function AddEditPackageModal({
 
         <div className="space-y-2 rounded-lg border border-slate-200 p-3">
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" {...register('p0On')} />
+            <input
+              type="checkbox"
+              {...register('p0On', {
+                onChange: (e) => applyFeatureSelection(0, e.target.checked),
+              })}
+            />
             <span>
               1-3 properties 
             </span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" {...register('p1On')} />
+            <input
+              type="checkbox"
+              {...register('p1On', {
+                onChange: (e) => applyFeatureSelection(1, e.target.checked),
+              })}
+            />
             <span>
               4-6 properties 
             </span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" {...register('p2On')} />
+            <input
+              type="checkbox"
+              {...register('p2On', {
+                onChange: (e) => applyFeatureSelection(2, e.target.checked),
+              })}
+            />
             <span>
               7 plus properties{' '}
              
