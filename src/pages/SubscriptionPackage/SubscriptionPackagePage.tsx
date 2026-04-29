@@ -129,6 +129,7 @@ export default function SubscriptionPackagePage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.06 * index }}
+            className="h-full"
           >
             <SubscriptionPackageCard pkg={pkg} onEdit={openEdit} onDelete={setDeleteTarget} />
           </motion.div>

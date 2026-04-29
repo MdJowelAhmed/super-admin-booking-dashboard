@@ -18,7 +18,7 @@ export function SubscriptionPackageCard({
   return (
     <div
       className={cn(
-        'flex flex-col rounded-2xl border border-sky-100/80 p-5 shadow-sm',
+        'flex h-full flex-col rounded-2xl border border-sky-100/80 p-5 shadow-sm',
         'bg-gradient-to-b from-sky-50 via-white to-white'
       )}
     >
@@ -59,7 +59,7 @@ export function SubscriptionPackageCard({
         })}
       </ul>
 
-      <div className="mt-8 flex gap-2 mt-10 justify-end">
+      <div className="mt-auto flex gap-2 pt-10 justify-end">
         <Button
           type="button"
           variant="outline"
