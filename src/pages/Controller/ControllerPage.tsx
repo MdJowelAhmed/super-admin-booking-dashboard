@@ -140,10 +140,10 @@ export default function ControllerPage() {
               setPage(1)
             }}
           >
-            <div className="px-6 pt-4">
+            <div className="px-6 py-4">
               <TabsList>
-                <TabsTrigger value="host">Host</TabsTrigger>
-                <TabsTrigger value="business">Business</TabsTrigger>
+                <TabsTrigger value="host" className='data-[state=active]:rounded-l-md data-[state=inactive]:rounded-l-md data-[state=inactive]:border'>Host</TabsTrigger>
+                <TabsTrigger value="business" className='data-[state=active]:rounded-r-md  data-[state=inactive]:rounded-r-md data-[state=inactive]:border'>Business</TabsTrigger>
               </TabsList>
             </div>
 
