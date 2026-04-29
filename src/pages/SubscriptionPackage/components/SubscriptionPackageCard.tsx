@@ -47,12 +47,12 @@ export function SubscriptionPackageCard({
             <li key={`${pkg.id}-${i}`} className="flex items-center gap-2">
               <Check className="h-4 w-4 shrink-0 text-[#6BBF2D]" strokeWidth={2.5} />
               <span>
-                {f.name ? <span className="font-medium">{f.name}: </span> : null}
+                {f.name ? <span className="font-medium">{f.name}</span> : null}
                 {f.description}
-                <span className="text-muted-foreground">
+                {/* <span className="text-muted-foreground">
                   {' '}
                   · {f.isUnlimited ? 'Unlimited' : `Limit ${f.limit ?? 0}`}
-                </span>
+                </span> */}
               </span>
             </li>
           )

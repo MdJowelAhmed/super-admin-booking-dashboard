@@ -249,20 +249,20 @@ export function AddEditPackageModal({
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" {...register('p0On')} />
             <span>
-              1-3 properties <span className="text-muted-foreground">(limit: 3)</span>
+              1-3 properties 
             </span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" {...register('p1On')} />
             <span>
-              4-6 properties <span className="text-muted-foreground">(limit: 6)</span>
+              4-6 properties 
             </span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" {...register('p2On')} />
             <span>
               7 plus properties{' '}
-              <span className="text-muted-foreground">(unlimited)</span>
+             
             </span>
           </label>
         </div>
